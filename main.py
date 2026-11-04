@@ -29,7 +29,7 @@ PROFILES = {
         "OLLAMA_MODEL": "qwen3:8b",
         "OLLAMA_NUM_CTX": "16384",
         "HIGHLIGHT_CHUNK_SECONDS": "600",
-        "LOCAL_WHISPER_MODEL": "small",
+        "LOCAL_WHISPER_MODEL": "large-v3-turbo",
         "LOCAL_WHISPER_DEVICE": "cpu",
     },
     # Same, but a ~14B model for better picks (close other apps; ~10-12 GB RAM).
@@ -38,7 +38,7 @@ PROFILES = {
         "OLLAMA_MODEL": "qwen3:14b",
         "OLLAMA_NUM_CTX": "16384",
         "HIGHLIGHT_CHUNK_SECONDS": "600",
-        "LOCAL_WHISPER_MODEL": "medium",
+        "LOCAL_WHISPER_MODEL": "large-v3-turbo",
         "LOCAL_WHISPER_DEVICE": "cpu",
     },
 }

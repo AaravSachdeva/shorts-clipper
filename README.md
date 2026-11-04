@@ -136,8 +136,8 @@ Clip selection can run on a local model through [Ollama](https://ollama.com). No
 
 | Profile | Model | Whisper | Good for |
 |---|---|---|---|
-| `cpu-slow` | `qwen3:8b`, 16K context, 10-min chunks | `small` (CPU) | ~16 GB RAM, little or no GPU. Clips from a 1-hour episode in a few hours |
-| `cpu-quality` | `qwen3:14b`, 16K context | `medium` (CPU) | 16 GB RAM with other apps closed. Slower, better picks |
+| `cpu-slow` | `qwen3:8b`, 16K context, 10-min chunks | `large-v3-turbo` (CPU) | ~16 GB RAM, little or no GPU. Clips from a 1-hour episode in a few hours |
+| `cpu-quality` | `qwen3:14b`, 16K context | `large-v3-turbo` (CPU) | 16 GB RAM with other apps closed. Slower, better picks |
 
 To set things up without a profile, use `LLM_PROVIDER=ollama` with `OLLAMA_MODEL`, `OLLAMA_NUM_CTX` and `OLLAMA_HOST` (see `.env.example`).
 
