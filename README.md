@@ -119,7 +119,33 @@ python main.py "https://www.youtube.com/watch?v=VIDEO_ID"
 python main.py "https://www.youtube.com/watch?v=VIDEO_ID" --mode local
 ```
 
-Local mode writes the rendered shorts to `./output/short_01.mp4`, `short_02.mp4`, … (override with `LOCAL_OUTPUT_DIR`).
+Local mode writes the rendered shorts to `./output/short_01.mp4`, `short_02.mp4`, … (override with `LOCAL_OUTPUT_DIR`). Each clip is 1080×1920 H.264. It comes with burned-in word-highlight captions, an on-screen hook for the first 3 s, and audio normalized to −14 LUFS. Next to each clip, `short_01.txt` holds a ready-to-paste title, caption and hashtags, and `short_01.json` holds the full metadata.
+
+### Fully offline with Ollama (no API keys)
+
+Clip selection can run on a local model through [Ollama](https://ollama.com). Nothing leaves your machine.
+
+1. Install Ollama, then pull a model:
+   ```bash
+   ollama pull qwen3:8b      # ~5 GB; or qwen3:14b (~9 GB) for better picks
+   ```
+2. Run with a profile:
+   ```bash
+   python main.py /path/to/episode.mp4 --mode local --profile cpu-slow
+   ```
+
+| Profile | Model | Whisper | Good for |
+|---|---|---|---|
+| `cpu-slow` | `qwen3:8b`, 16K context, 10-min chunks | `small` (CPU) | ~16 GB RAM, little or no GPU. Clips from a 1-hour episode in a few hours |
+| `cpu-quality` | `qwen3:14b`, 16K context | `medium` (CPU) | 16 GB RAM with other apps closed. Slower, better picks |
+
+To set things up without a profile, use `LLM_PROVIDER=ollama` with `OLLAMA_MODEL`, `OLLAMA_NUM_CTX` and `OLLAMA_HOST` (see `.env.example`).
+
+Notes:
+- **Context size matters.** Ollama's default context window is small, and it **silently truncates** longer prompts. The client always sends `num_ctx` (default 16384) and warns if a prompt filled the window. A bigger `num_ctx` uses more RAM: roughly 2–3 GB extra for an 8B model at 16K.
+- **Structured output.** Every call passes a JSON schema through Ollama's `format`, so even small models return valid JSON. The output is still validated and retried.
+- **Freeing memory.** The model is unloaded (`keep_alive: 0`) after clip selection, so its RAM is free during rendering.
+- **Timings.** The run prints how long each step took: transcribe, LLM, render.
 
 ### With options
 
@@ -155,9 +181,7 @@ for short in result["shorts"]:
     print(short["score"], short["title"], short["clip_url"])
 ```
 
-Local transcription is cached as an `.srt` file in `LOCAL_OUTPUT_DIR` using the
-video's base name. If the cache already exists and is newer than the source
-file, the app reuses it instead of running Whisper again.
+Local transcription is cached in `LOCAL_OUTPUT_DIR` under the video's base name, as `<name>.json` (segments plus word timestamps) and `<name>.srt`. If the cache is newer than the source file, the app reuses it instead of running Whisper again. An older `.srt`-only cache has no word timings, so that video is transcribed again once.
 
 Local downloads are also cached in `LOCAL_OUTPUT_DIR` as
 `source_<youtube_id>.mp4` when the input is a YouTube URL. If that file already
@@ -181,6 +205,14 @@ xargs -a urls.txt -I{} python main.py "{}"
 | `--format` | `720` | Source download resolution: `360` / `480` / `720` / `1080` |
 | `--language` | auto | Force Whisper language code (e.g. `en`) |
 | `--output-json` | — | Dump the full result (transcript + all candidates) to a file |
+| `--profile` | — | `cpu-slow` or `cpu-quality`: Ollama + CPU Whisper presets (local mode) |
+| `--llm-provider` | `LLM_PROVIDER` | `openai`, `gemini` or `ollama` (local mode) |
+| `--target-length` | `medium` | `short` ≈15–35 s, `medium` ≈20–60 s, `long` ≈45–90 s |
+| `--no-captions` | — | Don't burn in captions |
+| `--no-hook` | — | Don't show the on-screen hook title for the first 3 s |
+| `--crop-bottom` | `0` | Cut this % of frame height off the bottom first (burned-in tickers or chat bars) |
+| `--no-rerank` | — | Skip the comparative re-rank of the top candidates |
+| `--examples` | — | JSONL of top-performing clip openings (from `research/benchmark.py`) |
 
 ### API mode vs Local mode
 
@@ -188,21 +220,23 @@ xargs -a urls.txt -I{} python main.py "{}"
 |---|---|---|
 | Download | MuAPI `/youtube-download` | `yt-dlp` for remote URLs, direct file path for local inputs |
 | Transcription | MuAPI `/openai-whisper` | `faster-whisper` (CPU or CUDA) |
-| Highlight LLM | MuAPI `gpt-5-mini` | `LLM_PROVIDER=openai` uses OpenAI (`gpt-4o-mini` by default), `LLM_PROVIDER=gemini` uses Gemini (`gemini-2.5-flash` by default) |
-| Vertical crop | MuAPI `/autocrop` | `ffmpeg` + OpenCV face tracking |
+| Highlight LLM | MuAPI `gpt-5-mini` | `LLM_PROVIDER=openai` uses OpenAI (`gpt-4o-mini` by default), `gemini` uses Gemini (`gemini-2.5-flash`), `ollama` uses a local model (`qwen3:8b`) |
+| Vertical crop | MuAPI `/autocrop` | `ffmpeg` + OpenCV: one steady crop per camera shot, blur-fill when no face is on screen, captions and hook overlay burned in |
 | Output | hosted URLs | local mp4 paths |
-| Required keys | `MUAPI_API_KEY` | `OPENAI_API_KEY` or `GEMINI_API_KEY` (+ `ffmpeg` on PATH) |
+| Required keys | `MUAPI_API_KEY` | `OPENAI_API_KEY` or `GEMINI_API_KEY`, or none with Ollama (+ `ffmpeg` on PATH) |
 
 ## How It Works
 
 1. **Download**: Fetches the source video from YouTube
 2. **Transcribe**: MuAPI `/openai-whisper` produces a timestamped transcript (verbose_json segments)
 3. **Detect content type**: An LLM classifies the video (podcast, interview, tutorial, vlog, etc.) and density, so the prompt can be tuned per content style
-4. **Long-video chunking**: Videos > 30 min are split into 20-min overlapping chunks
-5. **Highlight ranking**: An LLM scans the transcript through a virality framework — hook moments, emotional peaks, opinion bombs, revelations, conflict, quotables, story peaks, practical value — and emits ranked candidates with scores 0–100
-6. **Dedupe**: Overlapping candidates are collapsed by score (>50% overlap → keep the higher score)
-7. **Top-N selection**: The top `--num-clips` candidates are selected
-8. **Auto-crop**: Each highlight is rendered as a vertical short at the requested aspect ratio
+4. **Long-video chunking**: Videos over 30 minutes are split into overlapping chunks (20 min, or 10 min with Ollama). Each chunk's timestamps are relative to that chunk.
+5. **Highlight ranking**: An LLM scans the transcript using a virality framework (hook moments, emotional peaks, opinion bombs, revelations, conflict, quotables, story peaks, practical value), plus what Shorts and Reels reward: a hook in the first 1–3 s, completion over length, and moments people send to friends. It skips ads and outros. For each candidate it returns a score, a hook score, a shareability score and a 3–8 word on-screen hook.
+6. **Boundary snapping**: Word timestamps move each clip to start on a sentence (skipping "so", "um", "yeah") and end just after one.
+7. **Dedupe**: Overlapping candidates are collapsed by score (more than 50% overlap keeps the higher score).
+8. **Global re-rank**: The top 12 are re-scored against each other in one call, so scores from different chunks are comparable.
+9. **Top-N selection and post metadata**: The top `--num-clips` are kept, and one call writes a title, caption and hashtags for each.
+10. **Render**: Each clip is cut, reframed to 9:16 (steady per-shot crop, or blur-fill when there's no face), captioned, given the hook overlay, loudness-normalized, and encoded as 1080×1920 H.264.
 
 **Output**: a list of mp4 URLs plus, for each clip, its title, viral score, hook sentence, and a one-line reason explaining why it should perform.
 
@@ -261,6 +295,21 @@ Edit `shorts_generator/config.py` (or set env vars):
 
 ### Whisper transcription
 Audio is transcribed by MuAPI's `/openai-whisper` endpoint (server-side `whisper-1`). Pass `--language <code>` to lock the recognition to a specific language; otherwise it auto-detects.
+
+## Engagement research
+
+`research/` has tools for tuning the defaults against real top-performing clips in your niche:
+- `benchmark.py` reads Shorts metadata and auto-captions (no downloads).
+- `instagram_reels_template.csv` is a template for logging Reels by hand.
+
+See [research/README.md](research/README.md).
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
 
 ## Project Structure
 
