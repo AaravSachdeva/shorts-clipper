@@ -20,6 +20,38 @@ LOCAL_WHISPER_MODEL = os.getenv("LOCAL_WHISPER_MODEL", "base")
 LOCAL_WHISPER_DEVICE = os.getenv("LOCAL_WHISPER_DEVICE", "auto")  # auto / cpu / cuda
 LOCAL_OUTPUT_DIR = os.getenv("LOCAL_OUTPUT_DIR", "output")
 
+# Ollama (LLM_PROVIDER=ollama) — fully local highlight ranking.
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").strip().rstrip("/")
+if not OLLAMA_HOST.startswith(("http://", "https://")):
+    OLLAMA_HOST = "http://" + OLLAMA_HOST  # `ollama serve` accepts bare host:port
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b").strip()
+# Ollama's built-in context window is small (a few thousand tokens) and it
+# silently truncates longer prompts, so we always send num_ctx explicitly.
+OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "16384"))
+# CPU inference on a 14B model can take many minutes per chunk.
+OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT", "3600"))
+OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "10m").strip()
+
+# Highlight selection.
+# Smaller local models do better on shorter chunks, so Ollama defaults to 10 min.
+HIGHLIGHT_CHUNK_SECONDS = int(
+    os.getenv("HIGHLIGHT_CHUNK_SECONDS", "600" if LLM_PROVIDER == "ollama" else "1200")
+)
+# short ≈ 15-35s, medium ≈ 20-60s (default), long ≈ 45-90s
+TARGET_LENGTH = os.getenv("TARGET_LENGTH", "medium").strip().lower()
+HIGHLIGHT_RERANK = os.getenv("HIGHLIGHT_RERANK", "true").strip().lower() == "true"
+# Optional JSONL of top-performing clip openings (see research/benchmark.py).
+HIGHLIGHT_EXAMPLES_PATH = os.getenv("HIGHLIGHT_EXAMPLES", "").strip()
+
+# Rendering.
+CAPTIONS_ENABLED = os.getenv("CAPTIONS", "true").strip().lower() == "true"
+HOOK_OVERLAY_ENABLED = os.getenv("HOOK_OVERLAY", "true").strip().lower() == "true"
+# Percent of frame height to cut from the bottom before reframing (burned-in tickers).
+CROP_BOTTOM_PCT = float(os.getenv("CROP_BOTTOM_PCT", "0"))
+OUTPUT_WIDTH = int(os.getenv("OUTPUT_WIDTH", "1080"))
+OUTPUT_HEIGHT = int(os.getenv("OUTPUT_HEIGHT", "1920"))
+TARGET_LUFS = float(os.getenv("TARGET_LUFS", "-14"))
+
 # VAD (Voice Activity Detection) settings for faster-whisper
 # Default threshold is 0.5; lower = more sensitive, higher = less sensitive
 # Default min_speech_duration_ms is 250ms; increase to avoid tiny false positives
