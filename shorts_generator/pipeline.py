@@ -3,9 +3,11 @@
 Two modes:
   * mode="api"   (default) — MuAPI does download / transcribe / LLM / autocrop.
                               Fast, no local deps, pay-per-call.
-  * mode="local"            — yt-dlp + faster-whisper + OpenAI or Gemini + ffmpeg/opencv.
-                              Self-hosted, LLM_PROVIDER selects OpenAI or Gemini.
+  * mode="local"            — yt-dlp + faster-whisper + an LLM + ffmpeg/opencv.
+                              Self-hosted; LLM_PROVIDER selects openai, gemini,
+                              or ollama (fully offline).
 """
+import time
 from typing import Dict, List, Optional
 
 from .clipper import crop_highlights
@@ -23,33 +25,54 @@ def _run_local(
 ) -> Dict:
     from .local.clipper import crop_highlights_local
     from .local.downloader import download_youtube_local
-    from .local.llm import call_local_llm
+    from .local.llm import call_local_llm, release_local_llm
     from .local.transcriber import transcribe_local
+    from .metadata import generate_metadata, write_sidecars
 
+    t0 = time.time()
+    timings: Dict[str, float] = {}
     source_path = download_youtube_local(youtube_url, fmt=download_format)
+    timings["download"] = time.time() - t0
 
+    t = time.time()
     transcript = transcribe_local(source_path, language=language)
+    timings["transcribe"] = time.time() - t
     if not transcript["segments"]:
         raise RuntimeError(
             "Whisper produced no segments. The video may have no detectable speech."
         )
 
-    highlights_result = get_highlights(transcript, num_clips=num_clips, llm_fn=call_local_llm)
-    all_highlights: List[Dict] = highlights_result.get("highlights", [])
-    if not all_highlights:
-        raise RuntimeError("Highlight generator returned zero clips.")
+    t = time.time()
+    try:
+        highlights_result = get_highlights(transcript, num_clips=num_clips, llm_fn=call_local_llm)
+        all_highlights: List[Dict] = highlights_result.get("highlights", [])
+        if not all_highlights:
+            raise RuntimeError("Highlight generator returned zero clips.")
+        top = sorted(all_highlights, key=lambda h: int(h.get("score", 0)), reverse=True)[:num_clips]
+        top = generate_metadata(transcript, top, call_local_llm)
+    finally:
+        release_local_llm()  # free the local model's RAM before rendering
+    timings["llm"] = time.time() - t
 
-    top = sorted(all_highlights, key=lambda h: int(h.get("score", 0)), reverse=True)[:num_clips]
-    print(f"[pipeline/local] cropping {len(top)} of {len(all_highlights)} candidates", flush=True)
-
-    shorts = crop_highlights_local(source_path, top, aspect_ratio=aspect_ratio)
+    print(f"[pipeline/local] rendering {len(top)} of {len(all_highlights)} candidates", flush=True)
+    t = time.time()
+    shorts = crop_highlights_local(source_path, top, aspect_ratio=aspect_ratio, transcript=transcript)
+    write_sidecars(shorts)
+    timings["render"] = time.time() - t
+    timings["total"] = time.time() - t0
+    print(
+        "[pipeline/local] timings: " + ", ".join(f"{k} {v / 60:.1f} min" for k, v in timings.items()),
+        flush=True,
+    )
 
     return {
         "mode": "local",
         "source_video_url": source_path,
         "transcript": transcript,
+        "content_info": highlights_result.get("content_info"),
         "highlights": all_highlights,
         "shorts": shorts,
+        "timings": timings,
     }
 
 
