@@ -1,15 +1,22 @@
-"""Local clipping: ffmpeg subclip + OpenCV face-aware vertical crop.
+"""Local clipping: ffmpeg subclip → steady per-shot 9:16 reframe → captions.
 
-Two stages per highlight:
-  1. Cut the source video to [start, end] with ffmpeg (re-encoded, audio kept).
-  2. Reframe the cut to the target aspect ratio. For 9:16 we slide a vertical
-     window horizontally across the frame to keep faces centred (Haar
-     cascade — same approach as the original repo, no external models).
+Per highlight:
+  1. Cut the source to [start, end] with ffmpeg (input seeking, re-encoded).
+  2. Analyse camera shots and faces on a downscaled copy; choose one crop
+     centre per shot (podcast cameras are static, so a held crop beats
+     chasing per-frame detections). Shots with no face (screen shares,
+     B-roll) get a blur-fill layout instead of a blind centre crop.
+  3. Compose every frame at the output size (default 1080×1920) and pipe it
+     to ffmpeg, which burns in word-highlight captions + the hook overlay
+     (ASS via libass) and normalises loudness (two-pass loudnorm).
 """
+import json
 import os
 import subprocess
-from typing import Dict, List, Optional, Tuple
+import tempfile
+from typing import Dict, List, Optional
 
+from .. import config
 from ..config import LOCAL_OUTPUT_DIR
 
 
@@ -20,6 +27,15 @@ def _ratio(aspect_ratio: str) -> float:
         return float(w) / float(h)
     except (ValueError, ZeroDivisionError):
         return 9.0 / 16.0
+
+
+def _output_size(aspect_ratio: str) -> (int, int):
+    r = _ratio(aspect_ratio)
+    if abs(r - config.OUTPUT_WIDTH / config.OUTPUT_HEIGHT) < 1e-3:
+        return config.OUTPUT_WIDTH, config.OUTPUT_HEIGHT
+    w = config.OUTPUT_WIDTH
+    h = int(round(w / r))
+    return w - w % 2, h - h % 2
 
 
 def _cut_subclip(source_path: str, start: float, end: float, out_path: str) -> str:
@@ -34,8 +50,8 @@ def _cut_subclip(source_path: str, start: float, end: float, out_path: str) -> s
         "-ss", f"{start:.3f}",
         "-i", source_path,
         "-t", f"{end - start:.3f}",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "20",
-        "-c:a", "aac", "-b:a", "128k",
+        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+        "-c:a", "aac", "-b:a", "192k",
         out_path,
     ]
     subprocess.run(cmd, check=True)
@@ -46,19 +62,29 @@ def _cut_subclip(source_path: str, start: float, end: float, out_path: str) -> s
 _DETECT_EVERY_N_FRAMES = 3      # run the face detector on every Nth frame
 _DETECT_WIDTH = 640             # downscale frames to this width for detection
 _MIN_FACE_FRAC = 0.08           # ignore "faces" smaller than 8% of frame height
-_SHOT_CUT_THRESHOLD = 0.5       # histogram correlation below this = camera cut
+_SHOT_CUT_THRESHOLD = 0.5       # frame-to-frame histogram correlation below this = hard cut
+_SHOT_DRIFT_THRESHOLD = 0.3     # correlation vs. the shot's first frame below this = gradual cut
 _MIN_SHOT_FRAMES = 6            # merge shorter "shots" (flashes, transitions)
+_MIN_FACE_SAMPLES = 3           # fewer face samples than this in a shot = no face
 
 
-def _is_cut(cv2, prev_hist, hist) -> bool:
-    return prev_hist is not None and cv2.compareHist(prev_hist, hist, cv2.HISTCMP_CORREL) < _SHOT_CUT_THRESHOLD
+def _is_cut(cv2, prev_hist, ref_hist, hist) -> bool:
+    """Hard cuts change the histogram between consecutive frames; animated
+    transitions (wipes, zooms, dissolves) only show up against the shot's
+    first frame."""
+    if prev_hist is None:
+        return False
+    if cv2.compareHist(prev_hist, hist, cv2.HISTCMP_CORREL) < _SHOT_CUT_THRESHOLD:
+        return True
+    return ref_hist is not None and cv2.compareHist(ref_hist, hist, cv2.HISTCMP_CORREL) < _SHOT_DRIFT_THRESHOLD
 
 
 def _analyze_shots(cv2, in_path: str, src_w: int, src_h: int):
     """Pass 1: find camera cuts and face centres.
 
-    Returns (shot_starts, face_samples) where shot_starts is a sorted list of
-    frame indices that begin a shot and face_samples is [(frame_idx, cx)].
+    `src_h` is the usable height (after --crop-bottom); rows below it are ignored.
+    Returns (shot_starts, face_samples, n_frames) where face_samples is
+    [(frame_idx, cx, area)].
     """
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     scale = min(1.0, _DETECT_WIDTH / float(src_w))
@@ -68,18 +94,23 @@ def _analyze_shots(cv2, in_path: str, src_w: int, src_h: int):
     shot_starts = [0]
     samples = []
     prev_hist = None
+    ref_hist = None
     idx = 0
     while True:
         ret, frame = cap.read()
         if not ret:
             break
+        frame = frame[:src_h]
         small = cv2.resize(frame, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
 
         hsv = cv2.cvtColor(cv2.resize(small, (64, 36)), cv2.COLOR_BGR2HSV)
         hist = cv2.calcHist([hsv], [0, 1], None, [16, 16], [0, 180, 0, 256])
         cv2.normalize(hist, hist)
-        if _is_cut(cv2, prev_hist, hist) and idx - shot_starts[-1] >= _MIN_SHOT_FRAMES:
+        if ref_hist is None:
+            ref_hist = hist
+        if _is_cut(cv2, prev_hist, ref_hist, hist) and idx - shot_starts[-1] >= _MIN_SHOT_FRAMES:
             shot_starts.append(idx)
+            ref_hist = hist
         prev_hist = hist
 
         if idx % _DETECT_EVERY_N_FRAMES == 0:
@@ -93,7 +124,7 @@ def _analyze_shots(cv2, in_path: str, src_w: int, src_h: int):
 
 
 def _shot_centres(shot_starts, samples, n_frames: int, src_w: int):
-    """One horizontal centre per shot: median of the dominant face's centres.
+    """One horizontal centre per shot (or None when the shot has no face).
 
     Within a shot, faces are clustered by x position; the cluster with the
     most total face area wins (the person on camera), so occasional false
@@ -103,11 +134,10 @@ def _shot_centres(shot_starts, samples, n_frames: int, src_w: int):
 
     bounds = shot_starts + [n_frames]
     centres = []
-    prev = src_w / 2.0
     for a, b in zip(bounds[:-1], bounds[1:]):
         pts = [(cx, area) for (i, cx, area) in samples if a <= i < b]
-        if not pts:
-            centres.append(prev)
+        if len(pts) < _MIN_FACE_SAMPLES:
+            centres.append(None)
             continue
         bucket_w = src_w / 8.0
         clusters = {}
@@ -119,21 +149,65 @@ def _shot_centres(shot_starts, samples, n_frames: int, src_w: int):
             key=lambda k: sum(a for kk in (k - 1, k, k + 1) for (_, a) in clusters.get(kk, [])),
         )
         members = [cx for kk in (best - 1, best, best + 1) for (cx, _) in clusters.get(kk, [])]
-        prev = statistics.median(members)
-        centres.append(prev)
+        centres.append(statistics.median(members))
     return centres
 
 
-def _reframe_vertical(in_path: str, out_path: str, aspect_ratio: str) -> str:
-    """Crop the cut clip to the target aspect ratio with a steady, per-shot frame.
+def _blur_fill(cv2, frame, out_w: int, out_h: int):
+    """Full frame, scaled to the output width, over a blurred, darkened copy of itself."""
+    import numpy as np
 
-    Podcast/interview cameras are almost always static, so instead of chasing
-    a face detection every frame (which jitters badly on false positives), we:
-      1. detect camera cuts and sample faces on a downscaled copy,
-      2. pick one crop position per shot (median of the dominant face),
-      3. hold that crop rock-steady for the whole shot, snapping on cuts.
-    Frames are piped to ffmpeg as H.264 with the original audio.
-    """
+    h, w = frame.shape[:2]
+    # background: centre-crop to the output ratio, blur at low res (fast), darken
+    bg_w = min(w, int(h * out_w / out_h))
+    x0 = (w - bg_w) // 2
+    bg = cv2.resize(frame[:, x0:x0 + bg_w], (out_w // 10, out_h // 10), interpolation=cv2.INTER_AREA)
+    bg = cv2.GaussianBlur(bg, (0, 0), 6)
+    bg = cv2.resize(bg, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
+    bg = (bg * 0.55).astype(np.uint8)
+    fg_h = int(round(h * out_w / w))
+    fg = cv2.resize(frame, (out_w, fg_h), interpolation=cv2.INTER_AREA)
+    y = max(0, (out_h - fg_h) // 2 - int(out_h * 0.06))   # sit slightly above centre, clear of captions
+    bg[y:y + fg_h] = fg[: max(0, min(fg_h, out_h - y))]
+    return bg
+
+
+def _measure_loudness(in_path: str, target: float) -> Optional[Dict]:
+    """First loudnorm pass: measure, return the values for the second pass."""
+    cmd = [
+        "ffmpeg", "-hide_banner", "-nostats", "-i", in_path, "-vn",
+        "-af", f"loudnorm=I={target}:TP=-1.5:LRA=11:print_format=json", "-f", "null", "-",
+    ]
+    p = subprocess.run(cmd, capture_output=True, text=True)
+    text = p.stderr
+    start, end = text.rfind("{"), text.rfind("}")
+    if p.returncode != 0 or start == -1:
+        return None
+    try:
+        return json.loads(text[start:end + 1])
+    except ValueError:
+        return None
+
+
+def _loudnorm_filter(in_path: str) -> str:
+    target = config.TARGET_LUFS
+    m = _measure_loudness(in_path, target)
+    if not m:
+        return f"loudnorm=I={target}:TP=-1.5:LRA=11"
+    return (
+        f"loudnorm=I={target}:TP=-1.5:LRA=11:"
+        f"measured_I={m['input_i']}:measured_TP={m['input_tp']}:measured_LRA={m['input_lra']}:"
+        f"measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true"
+    )
+
+
+def _escape_filter_path(path: str) -> str:
+    """Escape a path for use inside an ffmpeg filter argument (handles Windows drives)."""
+    return path.replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+
+
+def _render_short(in_path: str, out_path: str, aspect_ratio: str, ass_path: Optional[str] = None) -> str:
+    """Reframe the cut clip, burn in captions, normalise audio, encode H.264."""
     try:
         import cv2  # type: ignore
     except ImportError as e:
@@ -144,14 +218,19 @@ def _reframe_vertical(in_path: str, out_path: str, aspect_ratio: str) -> str:
     if not hasattr(cv2, "CascadeClassifier"):
         raise RuntimeError("This OpenCV build has no CascadeClassifier; install opencv-python<5.")
 
-    target_ratio = _ratio(aspect_ratio)
+    out_w, out_h = _output_size(aspect_ratio)
+    target_ratio = out_w / out_h
     cap = cv2.VideoCapture(in_path)
     if not cap.isOpened():
         raise RuntimeError(f"could not open {in_path}")
     src_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    src_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    full_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     cap.release()
+
+    # --crop-bottom: drop burned-in tickers / chat bars before reframing.
+    src_h = int(full_h * (1 - max(0.0, min(40.0, config.CROP_BOTTOM_PCT)) / 100.0))
+    src_h -= src_h % 2
 
     if target_ratio < src_w / src_h:
         crop_h = src_h
@@ -164,22 +243,35 @@ def _reframe_vertical(in_path: str, out_path: str, aspect_ratio: str) -> str:
 
     shot_starts, samples, n_frames = _analyze_shots(cv2, in_path, src_w, src_h)
     centres = _shot_centres(shot_starts, samples, n_frames, src_w)
-    print(f"[clip/local]   {len(shot_starts)} shot(s), {len(samples)} face samples", flush=True)
-
-    ffmpeg = subprocess.Popen(
-        [
-            "ffmpeg", "-y", "-loglevel", "error",
-            "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{crop_w}x{crop_h}", "-r", f"{fps}",
-            "-i", "-",
-            "-i", in_path,
-            "-map", "0:v:0", "-map", "1:a:0?",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-b:a", "128k",
-            "-movflags", "+faststart", "-shortest",
-            out_path,
-        ],
-        stdin=subprocess.PIPE,
+    n_blur = sum(c is None for c in centres)
+    print(
+        f"[clip/local]   {len(shot_starts)} shot(s), {len(samples)} face samples"
+        + (f", {n_blur} without a face → blur-fill" if n_blur else ""),
+        flush=True,
     )
+
+    vf = []
+    if ass_path:
+        vf.append(f"ass='{_escape_filter_path(ass_path)}'")
+    af = _loudnorm_filter(in_path)
+
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{out_w}x{out_h}", "-r", f"{fps}",
+        "-i", "-",
+        "-i", in_path,
+        "-map", "0:v:0", "-map", "1:a:0?",
+    ]
+    if vf:
+        cmd += ["-vf", ",".join(vf)]
+    cmd += [
+        "-af", af, "-ar", "48000",
+        "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "160k",
+        "-movflags", "+faststart", "-shortest",
+        out_path,
+    ]
+    ffmpeg = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 
     cap = cv2.VideoCapture(in_path)
     shot = 0
@@ -190,11 +282,18 @@ def _reframe_vertical(in_path: str, out_path: str, aspect_ratio: str) -> str:
             ret, frame = cap.read()
             if not ret:
                 break
+            frame = frame[:src_h]
             while shot + 1 < len(shot_starts) and idx >= shot_starts[shot + 1]:
                 shot += 1
-            cx = int(centres[shot])
-            x0 = max(0, min(src_w - crop_w, cx - crop_w // 2))
-            ffmpeg.stdin.write(frame[y0:y0 + crop_h, x0:x0 + crop_w].tobytes())
+            cx = centres[shot]
+            if cx is None:
+                out = _blur_fill(cv2, frame, out_w, out_h)
+            else:
+                x0 = max(0, min(src_w - crop_w, int(cx) - crop_w // 2))
+                out = cv2.resize(
+                    frame[y0:y0 + crop_h, x0:x0 + crop_w], (out_w, out_h), interpolation=cv2.INTER_CUBIC
+                )
+            ffmpeg.stdin.write(out.tobytes())
             idx += 1
     finally:
         cap.release()
@@ -205,21 +304,44 @@ def _reframe_vertical(in_path: str, out_path: str, aspect_ratio: str) -> str:
     return out_path
 
 
+def _write_ass(h: Dict, transcript: Optional[Dict], start: float, end: float, aspect_ratio: str) -> Optional[str]:
+    from ..boundaries import words_in_range
+    from .captions import build_ass
+
+    hook = (h.get("on_screen_hook") or h.get("title") or "").strip() if config.HOOK_OVERLAY_ENABLED else ""
+    words = words_in_range(transcript, start, end) if (transcript and config.CAPTIONS_ENABLED) else []
+    if not words and not hook:
+        return None
+    out_w, out_h = _output_size(aspect_ratio)
+    doc = build_ass(
+        words, end - start, width=out_w, height=out_h, hook_text=hook or None, captions=bool(words)
+    )
+    fd, path = tempfile.mkstemp(suffix=".ass", prefix="captions_")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(doc)
+    return path
+
+
 def crop_clip_local(
     source_path: str,
     start_time: float,
     end_time: float,
     aspect_ratio: str,
     out_path: str,
+    highlight: Optional[Dict] = None,
+    transcript: Optional[Dict] = None,
 ) -> str:
-    """Cut + reframe one highlight, returning the local mp4 path."""
+    """Cut + reframe (+ captions) one highlight, returning the local mp4 path."""
     cut_path = out_path + ".cut.mp4"
+    ass_path = None
     try:
         _cut_subclip(source_path, start_time, end_time, cut_path)
-        _reframe_vertical(cut_path, out_path, aspect_ratio)
+        ass_path = _write_ass(highlight or {}, transcript, start_time, end_time, aspect_ratio)
+        _render_short(cut_path, out_path, aspect_ratio, ass_path=ass_path)
     finally:
-        if os.path.exists(cut_path):
-            os.remove(cut_path)
+        for p in (cut_path, ass_path):
+            if p and os.path.exists(p):
+                os.remove(p)
     return out_path
 
 
@@ -228,6 +350,7 @@ def crop_highlights_local(
     highlights: List[Dict],
     aspect_ratio: str = "9:16",
     out_dir: Optional[str] = None,
+    transcript: Optional[Dict] = None,
 ) -> List[Dict]:
     out_dir = out_dir or LOCAL_OUTPUT_DIR
     os.makedirs(out_dir, exist_ok=True)
@@ -242,6 +365,8 @@ def crop_highlights_local(
                 float(h["end_time"]),
                 aspect_ratio,
                 out_path,
+                highlight=h,
+                transcript=transcript,
             )
             results.append({**h, "clip_url": out_path})
         except Exception as e:
