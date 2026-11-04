@@ -146,6 +146,10 @@ Notes:
 - **Structured output.** Every call passes a JSON schema through Ollama's `format`, so even small models return valid JSON. The output is still validated and retried.
 - **Freeing memory.** The model is unloaded (`keep_alive: 0`) after clip selection, so its RAM is free during rendering.
 - **Timings.** The run prints how long each step took: transcribe, LLM, render.
+- **Measured on a 4-core CPU, 16 GB RAM, no GPU (59-min episode):**
+  - Whisper `small` transcription took 27 min and peaked at 3.7 GB RAM. `large-v3-turbo` is slower and more accurate.
+  - Rendering 3 clips (2.5 min of video in total) took about 7 min.
+  - Ollama step not measured yet. Expect roughly 1–2 h for an 8B model on CPU; the run prints the real figure.
 
 ### With options
 

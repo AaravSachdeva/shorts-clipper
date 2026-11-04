@@ -1,0 +1,5 @@
+{"clips":[
+{"id":1,"title":"The Mario movie fix nobody asked for","caption":"Same cast, live action, Jack Black in a Bowser suit. Would you watch it?","hashtags":["#mariomovie","#jackblack","#chrisprattmario","#nintendo","#podcastclips"]},
+{"id":2,"title":"The show too violent for Korean TV","caption":"Debt, a game, and deadly stakes. Did you see this one coming?","hashtags":["#squidgame","#netflix","#kdrama","#tvrecommendations"]},
+{"id":3,"title":"This movie breaks every rule of storytelling","caption":"So bad it's magnificent. What's the worst movie you loved anyway?","hashtags":["#lifetimemovie","#badmovies","#chekhovsgun","#movietok","#podcastclips"]}
+]}

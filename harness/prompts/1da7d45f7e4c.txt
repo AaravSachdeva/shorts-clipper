@@ -1,0 +1,94 @@
+You are an elite short-form video editor who has studied thousands of viral clips on TikTok, Instagram Reels, and YouTube Shorts. You know exactly what makes viewers stop scrolling, watch to the end, and share.
+
+
+Virality signals to prioritize (ranked by impact):
+1. HOOK MOMENTS — statements that create immediate curiosity ("The secret is...", "Nobody talks about...", "I was completely wrong about...")
+2. EMOTIONAL PEAKS — genuine surprise, laughter, anger, vulnerability, excitement; raw unscripted reactions
+3. OPINION BOMBS — strong, polarizing or counter-intuitive statements that trigger agree/disagree
+4. REVELATION MOMENTS — surprising facts, stats, or confessions that reframe how the viewer thinks
+5. CONFLICT/TENSION — disagreement, pushback, or a problem being confronted head-on
+6. QUOTABLE ONE-LINERS — a sentence that works as a standalone quote card
+7. STORY PEAKS — the climax or twist of an anecdote; the payoff moment
+8. PRACTICAL VALUE — a concrete tip, hack, or insight the viewer can immediately apply
+
+
+What YouTube Shorts and Instagram Reels reward (judge every clip against this):
+- The first 1-3 seconds decide whether viewers swipe away. The clip's very first sentence must be its hook: no greetings, no setup, no "so"/"yeah"/"anyway", no reaction to something the viewer hasn't seen.
+- Completion matters more than length: a tight 30-second clip watched to the end beats a 60-second clip abandoned halfway. Choose the shortest version that still lands.
+- Instagram weighs sends (DM shares) heavily: favor moments someone would send to a friend because they are relatable, surprising, funny, or quotable.
+- Viewers have never seen this show: each clip must make sense on its own.
+
+Content type: podcast | Density: medium
+
+Your task: identify the most viral-worthy highlights from the transcript.
+
+Rules:
+- start_time is the timestamp of the clip's hook sentence: the clip opens on that sentence
+- Duration: aim for 20-60 seconds. Go up to 90 seconds only when a story needs the full arc to land. Never shorter than 12 seconds
+- end_time lands right after a payoff (punchline, conclusion, reaction); never cut mid-sentence or mid-thought
+- NEVER select ads, sponsor reads, trailers for other shows, appeals to support the show (Patreon, merch, "like and subscribe"), intros, or outros
+- Clips must not overlap significantly with each other
+- score: 0-100 overall viral potential (not general quality). hook_score: 0-100 strength of the first sentence on its own. shareability_score: 0-100 how likely a viewer sends it to someone
+- hook_sentence: the clip's opening line, quoted from the transcript
+- on_screen_hook: 3-8 words of overlay text for the first seconds that creates curiosity without spoiling the payoff (no hashtags, no emojis)
+- virality_reason: one sentence on why this clip will perform
+- Generate at least 2 highlights. If this part of the video is only ads, plugs, or an outro, return {"highlights": []}
+
+Respond ONLY with valid JSON (no markdown, no explanation):
+{"highlights":[{"title":"string","start_time":float,"end_time":float,"score":int,"hook_score":int,"shareability_score":int,"hook_sentence":"string","on_screen_hook":"string","virality_reason":"string"}]}
+
+Transcript:
+[1.9s] Maybe that's-
+[2.5s] Oh, that denies them a 599.
+[4.6s] probably an account involved.
+[6.0s] That's a good point saying like, well, you can offer it,
+[8.9s] but you know, we'd rather they get the box.
+[11.3s] It could be a tech thing too, right?
+[12.6s] Exactly, having to build a new app
+[14.2s] to serve all of that service,
+[15.9s] and you may not have it serve.
+[16.6s] In both situations, that could be why others
+[19.3s] haven't started it, but Spectrum has the app.
+[23.3s] And yet they make it hard to get, I don't know.
+[25.7s] It could be that they're in a slow rollout
+[28.0s] experimental phase, you know, because look,
+[29.8s] I mean, when you're that big,
+[31.8s] there are quarterly reasons why nobody wants
+[34.5s] It's to put their job on the line to be the one to suggest a bold move.
+[39.7s] Well, I as act are you, my friend, are a bold move all your own.
+[44.5s] What do you got going on these days?
+[45.9s] Well, you can go to youtube.com slash CNET.
+[48.7s] We have tons and tons of videos there.
+[50.8s] So if you're like, what am I going to watch now?
+[52.6s] Just go there.
+[53.6s] There's plenty of stuff.
+[54.7s] There was this, this phone came out from that company that makes
+[57.3s] that little TV box thing, Apple, this phone thing.
+[60.4s] And we got all these reviews up and stuff like that.
+[62.4s] So, um, check that out.
+[64.3s] Yeah, there's a great show called top five on seen it.
+[67.5s] Uh, you can, you can, it's been on for years too.
+[70.5s] You can go back and watch a little that's why I'm wearing this shirt that says that
+[73.3s] has a one on it.
+[74.0s] That's why I've got a notepad that says top five is a thing.
+[77.8s] Yeah.
+[79.0s] Um, I mean, there's also one on tech republic, but that's a different kind of guy.
+[84.7s] Yeah.
+[85.2s] He's, he's tired.
+[86.6s] Uh, our website is cord killers.com.
+[88.6s] Our email address is cord killers at gmail.com and we're live on twitch.tv slash night
+[92.5s] attack, which is also carried on diamondclub.tv Mondays at 7pm Eastern, 4pm Pacific. We'll
+[98.1s] talk to you next time. Hey, Tom Merritt, what's going on?
+[102.6s] I'm just hanging out here watching the scroll go by. What are you doing?
+[107.2s] Trying to set up a bit where we think our beautiful, beautiful patrons, all these wonderful
+[111.2s] names. I'm sorry. I'm too distracted looking at these beautiful, beautiful patron names
+[115.0s] going by. Look at that one. I mean, if you wanted to be one of these people,
+[118.1s] Patreon.com slash court killers would be the place to go.
+[121.5s] I mean, they're scratching our itch,
+[123.9s] like, because we're addicted.
+[124.7s] I think as long as it's consensual, like, it's fine.
+[127.5s] We're addicted to their money.
+[129.8s] And love.
+[131.4s] Might as well face it.
+[132.7s] Well, it got to there.
+[135.6s] Simon Club hopes you have enjoyed this program.

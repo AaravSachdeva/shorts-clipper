@@ -71,15 +71,22 @@ def snap_clip(words: List[Dict], start: float, end: float, window: float = SNAP_
     if i is None:
         return None
 
-    # Skip filler openers ("So, um, the thing is" -> "the thing is").
+    # Skip filler openers ("So, um, the thing is" -> "the thing is") and
+    # dangling 1-2 word fragments ("us. Yeah. Streaming..." -> "Streaming...").
     skipped = 0
-    while (
-        skipped < MAX_FILLER_SKIP
-        and i + 1 < len(words)
-        and _norm(words[i]["word"]) in FILLERS
-        and words[i + 1]["start"] - words[i]["end"] < 1.0
-    ):
-        i += 1
+    while skipped < MAX_FILLER_SKIP and i + 1 < len(words):
+        if _norm(words[i]["word"]) in FILLERS and words[i + 1]["start"] - words[i]["end"] < 1.0:
+            i += 1
+        elif _ends_sentence(words[i]) and words[i + 1]["start"] - start < window:
+            i += 1
+        elif (
+            i + 2 < len(words)
+            and _ends_sentence(words[i + 1])
+            and words[i + 2]["start"] - start < window
+        ):
+            i += 2
+        else:
+            break
         skipped += 1
 
     near_end = [j for j, w in enumerate(words) if abs(w["end"] - end) <= window and j > i]

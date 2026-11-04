@@ -92,3 +92,11 @@ def test_rerank_failure_keeps_scores():
 def test_examples_block_in_prompt():
     block = hl._examples_block([{"hook": "Nobody tells you this about rent.", "duration": 31}])
     assert "Nobody tells you this" in block and "(31s clip)" in block
+
+
+def test_empty_chunk_is_allowed_but_empty_full_video_is_not():
+    empty = lambda p, schema=None: '{"highlights": []}'
+    assert hl.call_highlight_api("x", {}, 600, 3, is_chunk=True, llm_fn=empty) == {"highlights": []}
+    import pytest
+    with pytest.raises(RuntimeError):
+        hl.call_highlight_api("x", {}, 600, 3, is_chunk=False, llm_fn=empty)

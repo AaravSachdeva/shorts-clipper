@@ -1,0 +1,15 @@
+Analyze these transcript samples (taken from across one video) and classify the content type.
+Choose one: podcast, interview, tutorial, lecture, commentary, debate, vlog, other.
+Also estimate content density: low (mostly filler/chit-chat), medium, or high (dense info/stories).
+Respond with JSON only: {"content_type": "...", "density": "..."}
+
+Transcript samples:
+Every year on their anniversary, Harold would plan a trip. The firing train, and it's my brother. My brother said Tony's been in an accident. She was gone. Now we have an investigation we have to conduct. There were small things that didn't totally add up.
+...
+animation and opening sequence and it just kind of kind of makes you feel a little more comfortable. Well, here's the part that really surprised me when the announcement first came out, everybody trembled with fear and cynicism in an insulation to say like, we don't want it, we don't need it, you're going to screw it up, you know, and really all they're saying is, I love Cowboy Bebop very much and I'm afraid that you will not do it justice and make
+...
+oh, that's the thing from the one scene. Here's what they don't tell you, is that this scene is an uncut 15 minutes of the two of them crouched walking through that grass so as not to be detected. Yeah, you can tell that's not from the game because there's a wide open space.
+...
+Well, and I think that this one is particularly important because at least in the NFL or NBA or whatever, you're watching human beings, whereas these are just machines moving. And you're like, go machine. They do have humans in them. Well, exactly.
+...
+I think as long as it's consensual, like, it's fine. We're addicted to their money. And love. Might as well face it. Well, it got to there. Simon Club hopes you have enjoyed this program.

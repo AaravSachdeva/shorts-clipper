@@ -40,3 +40,12 @@ def test_words_in_range_relative():
     t = {"segments": [{"start": 9, "end": 13.7, "text": "", "words": WORDS[:13]}]}
     w = words_in_range(t, 10.9, 13.7)
     assert w[0]["word"] == "the" and w[0]["start"] == 0.0
+
+
+def test_dangling_fragment_is_skipped():
+    words = _words([
+        ("with", 0.0, 0.2), ("us.", 0.2, 0.5), ("Yeah.", 0.7, 1.0),
+        ("Streaming", 1.2, 1.6), ("growth", 1.6, 2.0), ("is", 2.0, 2.1), ("slowing.", 2.1, 2.6),
+    ] + [(f"w{i}", 3.0 + i * 0.4, 3.3 + i * 0.4) for i in range(25)] + [("end.", 13.2, 13.6)])
+    out = snap_clip(words, start=0.2, end=13.5)
+    assert out["start_time"] == 1.12   # "Streaming" (1.2) minus the lead-in pad

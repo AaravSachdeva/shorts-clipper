@@ -1,0 +1,420 @@
+You are an elite short-form video editor who has studied thousands of viral clips on TikTok, Instagram Reels, and YouTube Shorts. You know exactly what makes viewers stop scrolling, watch to the end, and share.
+
+
+Virality signals to prioritize (ranked by impact):
+1. HOOK MOMENTS — statements that create immediate curiosity ("The secret is...", "Nobody talks about...", "I was completely wrong about...")
+2. EMOTIONAL PEAKS — genuine surprise, laughter, anger, vulnerability, excitement; raw unscripted reactions
+3. OPINION BOMBS — strong, polarizing or counter-intuitive statements that trigger agree/disagree
+4. REVELATION MOMENTS — surprising facts, stats, or confessions that reframe how the viewer thinks
+5. CONFLICT/TENSION — disagreement, pushback, or a problem being confronted head-on
+6. QUOTABLE ONE-LINERS — a sentence that works as a standalone quote card
+7. STORY PEAKS — the climax or twist of an anecdote; the payoff moment
+8. PRACTICAL VALUE — a concrete tip, hack, or insight the viewer can immediately apply
+
+
+What YouTube Shorts and Instagram Reels reward (judge every clip against this):
+- The first 1-3 seconds decide whether viewers swipe away. The clip's very first sentence must be its hook: no greetings, no setup, no "so"/"yeah"/"anyway", no reaction to something the viewer hasn't seen.
+- Completion matters more than length: a tight 30-second clip watched to the end beats a 60-second clip abandoned halfway. Choose the shortest version that still lands.
+- Instagram weighs sends (DM shares) heavily: favor moments someone would send to a friend because they are relatable, surprising, funny, or quotable.
+- Viewers have never seen this show: each clip must make sense on its own.
+
+Content type: podcast | Density: medium
+
+Your task: identify the most viral-worthy highlights from the transcript.
+
+Rules:
+- start_time is the timestamp of the clip's hook sentence: the clip opens on that sentence
+- Duration: aim for 20-60 seconds. Go up to 90 seconds only when a story needs the full arc to land. Never shorter than 12 seconds
+- end_time lands right after a payoff (punchline, conclusion, reaction); never cut mid-sentence or mid-thought
+- NEVER select ads, sponsor reads, trailers for other shows, appeals to support the show (Patreon, merch, "like and subscribe"), intros, or outros
+- Clips must not overlap significantly with each other
+- score: 0-100 overall viral potential (not general quality). hook_score: 0-100 strength of the first sentence on its own. shareability_score: 0-100 how likely a viewer sends it to someone
+- hook_sentence: the clip's opening line, quoted from the transcript
+- on_screen_hook: 3-8 words of overlay text for the first seconds that creates curiosity without spoiling the payoff (no hashtags, no emojis)
+- virality_reason: one sentence on why this clip will perform
+- Generate at least 6 highlights
+
+Respond ONLY with valid JSON (no markdown, no explanation):
+{"highlights":[{"title":"string","start_time":float,"end_time":float,"score":int,"hook_score":int,"shareability_score":int,"hook_sentence":"string","on_screen_hook":"string","virality_reason":"string"}]}
+
+Transcript:
+[2.2s] It I can't I can't say enough good things about this movie because it's just that's brilliant
+[6.9s] it makes you feel you've you've oh that's what lifetime movies do they make you feel
+[14.5s] it really you've you've almost got me signing up for a lifetime movie club right this is the
+[18.6s] the best advertisement they've ever done i'm dying to marry him brian what about you do you have
+[23.9s] anything close to dying to marry him uh oof uh actually i i i tread very lightly on this one
+[30.5s] because I watched Foundation and I thought the first two episodes were quite interesting
+[38.3s] and compelling. I made the mistake of four hours ago saying I watched Foundation and the
+[45.0s] two people who had read the book and had not watched Foundation immediately launched into
+[52.1s] who, oh, in the books, so I ain't read none of them books.
+[58.8s] I ain't no book reading.
+[60.5s] Let me guess.
+[61.1s] Let me guess.
+[61.6s] In the books, there's a bunch of old white people, white men
+[67.1s] who do everything.
+[69.4s] I don't know what happened in the books,
+[71.0s] but I know I rather enjoyed a foundation.
+[73.4s] What about you, Tom?
+[74.6s] Yeah, we watched it together, Eileen and I.
+[77.5s] And she has never read the books.
+[79.6s] books. She was constantly turning to me and saying, is that in the books? And I was saying,
+[84.8s] maybe two out of every 10 questions, no, they changed that. Or yes, that's in the book,
+[92.5s] but kind of different. And most of the time going, I don't remember. I don't remember
+[97.5s] if that's in the book or not. It's been so long since I read it and they're changed
+[100.0s] so much that I can't keep track. But that said, Eileen really enjoyed it too, not
+[104.2s] having read the book.
+[105.1s] And I am not religious about Isaac Asimov.
+[109.1s] So I'm like, yeah, this is a perfectly great take
+[111.6s] on the story.
+[112.4s] Let's see where it goes.
+[113.8s] And I think also, maybe this is also
+[116.4s] part of relating to the cowboy bebop thing.
+[119.1s] I love remixes.
+[120.5s] I love mashups.
+[121.7s] I love covers.
+[123.0s] I love new takes at all.
+[124.9s] You know, I love, I don't love every single cover,
+[128.9s] but I love when I get a new flavor on something
+[131.5s] that I previously experienced or experienced in reverse order and I like to remind people
+[137.4s] the you know the Dune movie that was so bad that that David Lynch refused to have his name
+[142.4s] associated with it. If I hadn't watched that I never would have read the book. It was only because
+[146.7s] I love that movie so much that I went and read the book. So if this is what gets me to read
+[151.0s] Foundation then then just let me have this. Then I don't want to be right.
+[156.1s] Yeah. Okay, so I feel like I may have become too cool about Korean dramas. As long time listeners
+[166.1s] and watchers of court killers know, I watch a lot of Korean dramas. I try to recommend the ones that
+[170.9s] I think might be of interest to folks when they come along from time to time. But Netflix has an
+[178.7s] original and they often have Korean drama originals that they do in partnership with
+[183.6s] with SBS or TVN, usually TVN because I think it's a studio dragon thing that air on TV in
+[188.9s] Korea and then on Netflix as well.
+[191.9s] This one I'm about to tell you is only on Netflix. It's way too violent for Korean television.
+[198.4s] And I heard about it first from other people who do not watch Korean dramas and felt a little
+[205.0s] bit like, well, I mean, if it was so good, I'm sure Eileen and I would have known about
+[209.6s] it. But we decided to watch it anyway. It's really good. It's called squid game. It is a very black
+[217.4s] mirror like premise. People who are hard up and in debt are are offered the chance to join a game
+[226.8s] and and win a bunch of money. But the game can be deadly. And then everything you might expect
+[237.3s] and Sue's about, you know, do they stay in the game?
+[241.3s] Were they tricked into the game?
+[242.7s] Can they leave the game?
+[243.8s] And the answer is they can leave the game.
+[246.6s] Do they leave the game?
+[247.9s] There's some interesting choices that you won't expect.
+[250.3s] It will surprise you from time to time.
+[251.9s] It's very bloody, though.
+[253.8s] And it's only nine episodes long, I think.
+[256.6s] So it's a quick watch, unlike a lot of Korean dramas,
+[259.8s] it's less than an hour per episode.
+[262.1s] And it's really well done.
+[264.4s] And if you're the kind of person who's like,
+[265.8s] I don't care how good it is.
+[266.8s] I don't read subtitles.
+[267.5s] There's an English dub of it as well.
+[270.0s] Cool.
+[271.4s] To be honest, I recommend Squid Game.
+[273.4s] I guess just looking at the the imagery in the trailer still,
+[278.1s] I for some reason, I thought it was a movie,
+[279.8s] but a short series sounds even better.
+[283.1s] Yeah, and sorry.
+[285.1s] Have you watched Alice in Borderland on Netflix?
+[287.5s] No, I haven't.
+[288.5s] It's a similar premise.
+[289.7s] And that's I love that show.
+[291.6s] And I'm really curious how this one is
+[293.3s] because it's I'm looking to fill that void.
+[295.1s] So I'm glad to hear Squid Game.
+[296.6s] It sounds interesting.
+[297.8s] Yeah, yeah.
+[299.3s] It's it's a it's a good it's a good good watch.
+[301.9s] We we binged it in a couple of days.
+[305.3s] So go check it again.
+[306.5s] Again, it's called Squid Game.
+[307.8s] And if you're at a Halloween party
+[309.5s] and somebody's in a green track suit, now you know why.
+[312.3s] Bryce, what should we be on the lookout for?
+[314.3s] Hey, I got a pick.
+[315.0s] I got a pair of picks today.
+[316.2s] I actually got a pair of pickle peppers.
+[319.0s] Pick two, pick two.
+[320.5s] These have taken my viewing habits by storm lately.
+[323.1s] People who have heard me on other podcasts
+[324.5s] probably know what this is going to be. So a bunch of people have told me to watch that Netflix
+[327.7s] docuseries F1 drive to survive. And I love it. It's great. It's a fantastic show. It is,
+[335.4s] it follows each season of Formula One racing and the different drivers. And I really like this
+[342.4s] in the same way that I like Last Chance You or Cheer, both Netflix docuseries. It focuses
+[347.4s] really strongly on the stories and the drivers and the personalities that happen in the season.
+[352.6s] And what's very interesting is because this is not like
+[356.5s] In real time right this is about last year season
+[360.4s] They do a really interesting thing which is that they tell all of they tell pretty much the entire season out of order
+[367.1s] completely out of order the each episode is like
+[370.2s] Based on a team or a driver and so you see what's what's new with my my friends over at Ferrari
+[377.5s] What's going on at McLaren now and it's a very interesting way to tell the story because you no longer feel like okay
+[384.1s] Here are these like 20 plus
+[386.8s] Races that I have to keep in my head and I have to keep them all organized and instead it's just like no
+[391.5s] Okay, here was a race. Oh my gosh
+[393.0s] He was a race and can you believe what happened on that day and here was another day?
+[396.5s] Oh my gosh, and then they went and they did this next week
+[398.5s] like it's it's a really interesting kind of organic way of telling that and the the other thing that I really like about it is that
+[407.1s] It got me really familiar with the teams and the drivers and stuff,
+[410.5s] which got me into the F1 TV app.
+[414.0s] And so when you really like Formula One,
+[416.3s] it's very easy as a cord cutter to watch Formula One.
+[419.0s] They've got the F1 app and the website, which is really cool.
+[423.0s] It lets you watch all of the archives of the races,
+[426.5s] it lets you watch them live,
+[427.4s] it lets you see all of the other events like qualifying,
+[429.8s] and they added sprint races this year.
+[432.1s] So you can watch those sprint races,
+[434.0s] as well as Formula 2 and Formula 3.
+[436.3s] If Formula 1 is too fast for you,
+[438.6s] you could also watch the other one.
+[440.2s] So I think it's really interesting
+[442.2s] that they've kind of built this little pipeline
+[444.5s] for this little Netflix racing pipeline.
+[447.4s] So I think that's really interesting
+[448.9s] if you like sports or competition or sports stories.
+[452.2s] Check out F1 Drive to Survive,
+[454.4s] there are three seasons of that on Netflix
+[455.7s] and Formula 1 airs on ESPN2 in America
+[458.8s] and they have an app, it's about $10 a month,
+[460.7s] which is actually pretty I'm not pretty good for about two or three races a month.
+[466.4s] Oh, very cool.
+[467.8s] Yeah, I I think it's really smart for all of these sports organizations
+[471.5s] to work on documentaries that NFL is doing this major league baseball is doing
+[476.1s] it to get people interested and then therefore want to watch the games
+[480.2s] because now they have the background.
+[481.5s] Well, and I think that this one is particularly important
+[485.0s] because at least in the NFL or NBA or whatever, you're watching human beings,
+[489.5s] whereas these are just machines moving.
+[492.7s] And you're like, go machine.
+[493.6s] They do have humans in them.
+[495.1s] Well, exactly.
+[496.2s] And this is what makes it real to you.
+[498.5s] You know the team and you know, yeah.
+[500.4s] Because it clears through all, like football,
+[503.4s] like I'm not gonna say football is easy.
+[504.8s] It's not easy, but it's certainly less complicated
+[508.0s] than Formula One, I think would seem to a lay person.
+[511.7s] And so this cuts through all of the like,
+[513.3s] who cares about the wing angle and your fuel gauge?
+[516.7s] Like, can I just learn about these people?
+[518.7s] And I think that's a really interesting way to do it and you see that all the way down from you know
+[523.1s] We talked about last year to you and and and this drive to survive which is really popular
+[526.4s] But even little like there are the way you get into formula one is through carding as a kid
+[532.2s] You're right. It's very expensive and very very elite
+[534.5s] But you go carding and some of these drivers have like cart teams and even they have YouTube channels that are like
+[541.5s] All about the personality here the people on our cart team and they have hundreds of thousands of views
+[546.4s] It's like it's very personality driven and I think it's a really interesting way to introduce people to sports. Very cool
+[552.3s] So if you've got something we should be on the lookout for please email it to us cord killers at gmail.com. Thank you
+[558.3s] We come to you because there is a doghouse system computer that exists
+[562.9s] And you could feel like us by having one in your own home mimic us
+[569.0s] And when you do use the URL doghouse systems comm slash rogue that tells doghouse systems
+[575.9s] No, Brian isn't just stealing your stuff.
+[579.1s] He's telling people to buy other stuff, to pay for it.
+[582.2s] Yes, that's correct.
+[583.6s] And I think that's all I got this week.
+[586.8s] All right, let's move on to the front lines.
+[590.9s] Front lines.
+[593.6s] Barbara Broccoli told Sky News
+[595.8s] that Amazon has committed to releasing
+[597.7s] James Bond movies in the theaters
+[599.5s] if and when it closes the acquisition of MGM.
+[602.6s] A lot of people were worried that, you know,
+[604.3s] Well, Amazon, they'll just put it on streaming.
+[606.6s] Amazon's always been pretty good about releasing in theaters
+[608.6s] and respecting whatever window happens to be in place.
+[611.2s] But it's nice for the broccoli family
+[613.6s] that controls the rights to bond to say,
+[615.6s] no, no, no, we talked to him, it's all good,
+[616.9s] it's gonna be in theaters.
+[618.0s] Broccoli also said the next bond after Daniel Craig
+[620.5s] will not be discussed until next year.
+[622.3s] So if you hear rumors about who it's gonna be,
+[624.5s] those are just rumors until next year,
+[626.4s] then the rumors become real, I guess, I don't know.
+[628.6s] I know we discussed the big deal
+[631.2s] when it was first announced,
+[632.2s] but is the door open to really quirky, weird stuff like James Bond, TikTok,
+[637.7s] Cirque or anything down the road? Yeah, I don't know. TV series.
+[641.9s] They haven't even closed the acquisition. There's some rumors that governments might
+[645.3s] get involved and stop the acquisition as being antitrust. So we'll see if they even get MGM.
+[651.7s] But if they do, yeah, I don't know. The adventures of young Q,
+[656.3s] to building machines and whatever. Yes, he has to stay anonymous.
+[660.2s] us. Yeah. Streaming subscriber growth is finally maturing for Disney CEO Bob Chaff,
+[665.5s] Chief Exit investor told investors that they should expect subscriber increases in the quote
+[670.4s] low single digit millions in the coming quarter. Disney Plus added 12 million last quarter.
+[677.3s] Yeah. So this is Disney saying like, don't don't freak out when we tell you it's eight million
+[682.6s] instead of 12 million next time or maybe four million. I don't know.
+[685.8s] JPEG's setting expectations low.
+[689.9s] Yeah, I mean, I guess, man, boy, Disney, Disney Plus just had such a perfectly time to launch, I say, with, with, it's gross to say, but in the middle of COVID, really good time to launch a streaming service with the beloved back catalog.
+[705.6s] CNBC sources say that Apple, along with others, Peacock was among those in the CNBC article
+[712.1s] as well, told the Alliance of Theatrical Stage Employees that Apple TV Plus had fewer than
+[716.3s] 20 million subscribers. Peacock and Paramount Plus said the same thing because that lets
+[721.0s] all those organizations pay at a lower rate. The union has agreements that are like, hey,
+[726.1s] if your service reaches this many people, you have to pay at a higher rate because
+[729.9s] it's a more popular service. Apple, of course, said in response, it pays rates
+[733.8s] that are comparable to leading streaming services.
+[736.8s] So it could be a situation where Apple was like,
+[739.4s] no, we have less than 20 million,
+[740.5s] so this is our guaranteed rate,
+[741.7s] but they still could pay people more than that.
+[744.3s] Nobody's gonna object if they did.
+[745.7s] This is a wild, Apple TV is a thing,
+[749.6s] Apple TV plus is a thing.
+[752.4s] Wild speculation here, conspiracy theory,
+[755.6s] is it possible, like would the free,
+[759.2s] you buy an Apple device, you get the service for free,
+[762.2s] Does that make you a subscriber or no?
+[765.4s] Yeah, we don't know.
+[766.8s] We don't know if they're only talking about paid subscribers.
+[769.2s] That would make sense for Peacock, too, right?
+[771.1s] Cause they have the free ad supported version.
+[772.7s] Do they count those people or is it only the paid for people?
+[776.2s] We don't know any of that stuff.
+[777.8s] So it's, it's hard to say.
+[779.5s] It is interesting because we haven't got numbers
+[781.4s] for Apple TV plus broken out.
+[783.7s] And so journalists jumped on this as like,
+[786.2s] aha, we have a number, it's less than 20 million
+[788.8s] apparently, or is it?
+[790.4s] We also have a union story.
+[791.3s] Oh, what do we do?
+[793.3s] Do we make fun of Apple for having less than 20 million?
+[795.6s] Or do we try to imply that it's more than 20 million
+[797.6s] and they're trying to pay union employees less?
+[799.5s] Ah, my clickbait headlines work either way.
+[802.6s] What do I do?
+[803.4s] Apple starts cackling checkmate.
+[808.1s] Google TV's latest update lets Android users
+[810.7s] use their mobile devices as a remote.
+[813.2s] You can add the remote tile to a quick settings
+[815.2s] or get it through the Google TV app.
+[817.0s] After the new remote feature is widely available,
+[819.1s] The Android TV remote app will no longer be supported and available for use
+[824.7s] Yeah, so swapping out
+[827.0s] Google TV app for the Android TV app
+[828.9s] Which means that everybody Android TV and Google TV users will be able to use it
+[832.6s] Which is very good for the Google TV users a little annoying for the Android TV users honestly because it's not to make that adjustment
+[839.0s] And Comcast launched a streaming device called the Z1 named after Xi Jinping the president of no
+[845.8s] I don't know, but it spells it.
+[847.7s] It's X-I-O-N-E.
+[850.6s] For customers of Xfinity and Sky, worldwide,
+[854.0s] it will start in Europe.
+[855.1s] It's gonna be available in Europe first.
+[856.9s] Comcast is also working with HySense and Walmart
+[858.8s] on a TV to be called Class X TV.
+[863.3s] They like X.
+[865.0s] Yeah, I never know what to expect from that.
+[868.3s] Viacom CBS is promoting a bundle with Paramount Plus
+[871.2s] and show time for $10 a month with ads
+[873.3s] or $13 a month without ads.
+[875.4s] that seems like good pricing. Until October 20th, Paramount Plus alone is $5 or $10 depending on ads
+[881.7s] and Showtime is $11 a month. This is the same bundle that has been offered through Apple TV Plus
+[886.7s] since last year. That's good pricing. $3 more to go, no ads? That seems like an easy way to go.
+[894.7s] I jumped on this through Apple TV Plus when they first announced it last year because
+[900.0s] is, you know, why not just get free content? Yep. All right,
+[904.6s] let's get to the dispatches from the front. Terry Z wrote us
+[916.1s] from Chicago. And for the purposes of this show, I will
+[918.6s] assume he is a White Sox fan. He writes, I've seen many sites
+[922.2s] say how easy it is for non Apple users to watch Apple TV plus
+[926.0s] lots of other sites are saying the same thing. I think
+[929.2s] they're all lying. I downloaded the Apple TV app from Amazon and installed it on my Toshiba TV
+[935.4s] with Fire TV. However, to watch the Plus, the app says I must have subscribed to Apple TV Plus
+[941.9s] on an Apple device. The only Apple devices I have are an iPod Touch and a very old iPad model
+[948.7s] MC918LLA running 9.3.5. The iPad just runs me around and never gets me anywhere. I can sign
+[954.0s] up for plus. Am I missing something? Do you have any suggestions? Thanks in advance. Terry
+[959.0s] Z. I know it's not exact. I want to go. I want to get right to the, to the solution part,
+[965.6s] Brian. And then, and then you can jump in. Oh, sure. I created a new Apple ID and signed
+[970.1s] up for a trial app, a little TV plus account on my windows machine. I don't know why your
+[975.1s] iPad isn't working. That's really strange, especially the newer ones. But maybe it's
+[980.0s] because it's so old.
+[981.3s] But anyway, if you have a Windows machine,
+[982.9s] just go sign up there, then use that credential.
+[985.9s] I don't know why the app's telling you that it's weird.
+[988.4s] But I was able to make it work, so maybe that will help you.
+[990.8s] Yeah, maybe I'm having trouble because of the hybrid
+[993.5s] experience, but I mean, it is a constant.
+[996.0s] Because I like to watch on a browser,
+[998.3s] but I've never had to re-authenticate so many times.
+[1001.8s] And each time it's on a device, and then half the time
+[1004.7s] my wife clicks, like, oh, allow this.
+[1007.4s] And then before I get it, so she allows it.
+[1009.6s] But then I don't have the pin.
+[1011.4s] So I have to I have to do it again.
+[1013.5s] It's I've I also have found it very, very clunky.
+[1017.4s] The authentication thing, especially in the browser, is really annoying.
+[1021.6s] I've had that same experience with not Apple TV Plus, but with the Apple sign
+[1026.9s] in stuff for for baseball, I would have to sign in all the time.
+[1030.0s] And it really was really annoying.
+[1032.1s] It was convenient to set it up.
+[1033.3s] And then you have to because I mean, I appreciate the security
+[1036.3s] in the two-factor note, but oh, I'm trying to just play baseball. Yeah. Yeah, here's
+[1043.3s] the solution for you guys, just buy an Apple TV. You know, I hear it's a thing. Yeah, exactly.
+[1052.8s] And then Cliff in Mala, New Jersey said, this is something I never thought I would see.
+[1057.4s] Optimum Altis Cable is my internet provider and cable TV provider where I live in Northern New
+[1061.9s] Jersey. They just started promoting a package to get your internet from them and use an Apple
+[1067.0s] TV to offer their own streaming for TV packages over the internet. It'd be like using their
+[1074.1s] cable internet and getting all your TV from streaming services like YouTube TV or sling,
+[1077.9s] etc. Except it would be their own cable TV package delivered over the internet, including
+[1082.8s] local channels and services like Hulu HBO Max, etc. I don't know what took them
+[1087.2s] so long. But yes, all the cable services should be doing this. Spectrum actually has a plan
+[1092.3s] like this in Southern California here, but they hide it. I'm like, no, you should be
+[1097.4s] pushing that because anybody with that internet service is going to be like, oh yeah, maybe
+[1102.1s] I'll just I get all your channels and but but I don't have to bother with a installer
+[1106.3s] coming by and getting your box. Yeah, I'm all for it. I don't know why they're
+[1110.5s] not doing this more. I mean, I would assume because somebody would have to explain
+[1115.6s] in the technical details of why different thing
+[1118.8s] is good to board members.
+[1120.9s] And it's easier to just say, no, do same thing,
+[1124.2s] same thing good, numbers, same.
+[1126.3s] Okay, do new thing, but hide it so board member don't see.
+[1130.2s] Yeah, yeah.
+[1131.0s] Right.
+[1131.7s] Yeah, no, that makes a lot of sense to me.
+[1134.7s] Is that a TV thing?
+[1136.1s] It's a thing, but I'm curious if they hide it
+[1137.9s] because you're not getting the revenue
+[1139.6s] from the rental of the box itself.
+[1141.9s] Maybe that's-
+[1142.5s] Oh, that denies them a 599.
+[1144.6s] probably an account involved.
+[1146.0s] That's a good point saying like, well, you can offer it,
+[1148.9s] but you know, we'd rather they get the box.
+[1151.3s] It could be a tech thing too, right?
+[1152.6s] Exactly, having to build a new app
+[1154.2s] to serve all of that service,
+[1155.9s] and you may not have it serve.
+[1156.6s] In both situations, that could be why others
+[1159.3s] haven't started it, but Spectrum has the app.
+[1163.3s] And yet they make it hard to get, I don't know.
+[1165.7s] It could be that they're in a slow rollout
+[1168.0s] experimental phase, you know, because look,
+[1169.8s] I mean, when you're that big,
+[1171.8s] there are quarterly reasons why nobody wants
+[1174.5s] It's to put their job on the line to be the one to suggest a bold move.
+[1179.7s] Well, I as act are you, my friend, are a bold move all your own.
+[1184.5s] What do you got going on these days?
+[1185.9s] Well, you can go to youtube.com slash CNET.
+[1188.7s] We have tons and tons of videos there.
+[1190.8s] So if you're like, what am I going to watch now?
+[1192.6s] Just go there.
+[1193.6s] There's plenty of stuff.
+[1194.7s] There was this, this phone came out from that company that makes
+[1197.3s] that little TV box thing, Apple, this phone thing.
+[1200.4s] And we got all these reviews up and stuff like that.
+[1202.4s] So, um, check that out.
+[1204.3s] Yeah, there's a great show called top five on seen it.
+[1207.5s] Uh, you can, you can, it's been on for years too.
+[1210.5s] You can go back and watch a little that's why I'm wearing this shirt that says that
+[1213.3s] has a one on it.
+[1214.0s] That's why I've got a notepad that says top five is a thing.
+[1217.8s] Yeah.
+[1219.0s] Um, I mean, there's also one on tech republic, but that's a different kind of guy.
+[1224.7s] Yeah.
+[1225.2s] He's, he's tired.
+[1226.6s] Uh, our website is cord killers.com.
+[1228.6s] Our email address is cord killers at gmail.com and we're live on twitch.tv slash night
+[1232.5s] attack, which is also carried on diamondclub.tv Mondays at 7pm Eastern, 4pm Pacific. We'll
+[1238.1s] talk to you next time. Hey, Tom Merritt, what's going on?
+[1242.6s] I'm just hanging out here watching the scroll go by. What are you doing?
+[1247.2s] Trying to set up a bit where we think our beautiful, beautiful patrons, all these wonderful
+[1251.2s] names. I'm sorry. I'm too distracted looking at these beautiful, beautiful patron names
+[1255.0s] going by. Look at that one. I mean, if you wanted to be one of these people,

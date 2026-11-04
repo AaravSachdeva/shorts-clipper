@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from . import config, muapi
-from .boundaries import snap_highlights
+from .boundaries import all_words, snap_highlights
 
 
 LLMFn = Callable[..., str]
@@ -136,7 +136,7 @@ Rules:
 - hook_sentence: the clip's opening line, quoted from the transcript
 - on_screen_hook: 3-8 words of overlay text for the first seconds that creates curiosity without spoiling the payoff (no hashtags, no emojis)
 - virality_reason: one sentence on why this clip will perform
-- {num_clips_instruction}
+- {num_clips_instruction}. If this part of the video is only ads, plugs, or an outro, return {{"highlights": []}}
 {examples}
 Respond ONLY with valid JSON (no markdown, no explanation):
 {{"highlights":[{{"title":"string","start_time":float,"end_time":float,"score":int,"hook_score":int,"shareability_score":int,"hook_sentence":"string","on_screen_hook":"string","virality_reason":"string"}}]}}"""
@@ -411,9 +411,15 @@ def call_highlight_api(
         raw = _invoke(llm_fn, prompt, HIGHLIGHT_SCHEMA)
         try:
             parsed = _parse_json_loose(raw)
-            highlights = _sanitize_highlights(parsed.get("highlights"), duration=duration)
+            raw_list = parsed.get("highlights")
+            highlights = _sanitize_highlights(raw_list, duration=duration)
             if highlights:
                 return {"highlights": highlights}
+            # A chunk may legitimately have nothing worth clipping (an outro,
+            # an ad block); an explicit empty list is a valid answer there.
+            if is_chunk and isinstance(raw_list, list) and not raw_list:
+                print("[highlights] model found nothing clip-worthy in this chunk", flush=True)
+                return {"highlights": []}
             last_error = "no valid highlights in response"
         except Exception as e:
             last_error = str(e)
@@ -458,10 +464,15 @@ def dedupe_highlights(highlights: List[Dict]) -> List[Dict]:
 
 
 def _clip_excerpt(transcript: Dict, start: float, end: float, head: int = 650, tail: int = 250) -> str:
-    text = " ".join(
-        s["text"].strip() for s in transcript.get("segments", [])
-        if s["end"] > start and s["start"] < end
-    )
+    """The clip's words exactly as cut (word timings), else overlapping segments."""
+    words = [w for w in all_words(transcript) if start <= (w["start"] + w["end"]) / 2 <= end]
+    if words:
+        text = " ".join(w["word"] for w in words)
+    else:
+        text = " ".join(
+            s["text"].strip() for s in transcript.get("segments", [])
+            if s["end"] > start and s["start"] < end
+        )
     if len(text) <= head + tail + 5:
         return text
     return text[:head].rstrip() + " … " + text[-tail:].lstrip()

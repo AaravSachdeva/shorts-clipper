@@ -1,0 +1,14 @@
+{"rankings":[
+{"id":4,"score":90,"reason":"Tightest clip: curiosity hook in the first line, vivid payoff, 37s."},
+{"id":3,"score":88,"reason":"Forbidden-content hook about a hit show; stays engaging."},
+{"id":2,"score":82,"reason":"Gleeful rant, highly shareable; slightly long setup."},
+{"id":1,"score":80,"reason":"Strong quotable opener and ending, but 70s is long."},
+{"id":6,"score":78,"reason":"Funny roast with a quick punchline."},
+{"id":9,"score":72,"reason":"Quotable contrarian take, short."},
+{"id":5,"score":70,"reason":"Great analogy but the opening line is messy ('I mean... I mean')."},
+{"id":7,"score":68,"reason":"Surprising news, reads like a news segment."},
+{"id":8,"score":64,"reason":"Fun analogy, needs context about the carriage dispute."},
+{"id":11,"score":60,"reason":"Fun format but a list of announcements."},
+{"id":12,"score":55,"reason":"Stats without a strong hook."},
+{"id":10,"score":50,"reason":"Opens mid-sentence; weak first line."}
+]}

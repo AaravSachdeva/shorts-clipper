@@ -1,0 +1,15 @@
+You write posts for YouTube Shorts and Instagram Reels. For each clip below, write:
+- title: under 60 characters, curiosity-driven, no clickbait lies, no emojis
+- caption: 1-2 short lines that add context or ask a question viewers will want to answer in the comments
+- hashtags: 3-5 relevant hashtags (lowercase, no spaces, include the # sign)
+
+[1] working title: "How to fix the Mario movie"
+I have one tweak that I absolutely guarantee would make a better movie. All these same actors, all these same roles, not animated. Just Chris Pratt doing a Mario impression the whole time. Jack Black all dressed up in a costume. You're walking around as black, I'm Bowser. Come on. As a live -action Bowser is fantastic. And if he's not promoting the movie. Charlie Day is live -action Luigi. I'll Pepe solve it up. I mean. A Keegan -Michael Key as Toad live -action would be freaking hilarious. We know.
+
+[2] working title: "Too violent for Korean TV"
+This one I'm about to tell you is only on Netflix. It's way too violent for Korean television. And I heard about it first from other people who do not watch Korean dramas and felt a little bit like, well, I mean, if it was so good, I'm sure Eileen and I would have known about it. But we decided to watch it anyway. It's really good. It's called squid game. It is a very black mirror like premise. People who are hard up and in debt are are offered the chance to join a game and and win a bunch of mo … ame. Do they leave the game? There's some interesting choices that you won't expect. It will surprise you from time to time. It's very bloody, though.
+
+[3] working title: "The most nonsensical movie ever made"
+Checkups gun is a dramatic principle that suggests that details within a story or play will contribute to the overall narrative. This movie does away with that. None of it makes any sense. If there's a detail in the movie, it has nothing to do with anything else in the movie. It consistently breaks this rule for the entire run time. Liz was on the couch with me and I had to pause this movie so many times I'm like, why is this happening? It was just this amazing piece of work and I cannot believe … t magnificent. If not for no other reason, get Lifetime Movie Club just for one month. Watch this movie called Dying to Marry Him, it is mind blowing.
+
+Respond ONLY with valid JSON: {"clips":[{"id":int,"title":"string","caption":"string","hashtags":["#tag"]}]}

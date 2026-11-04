@@ -1,29 +1,79 @@
 [
   {
-    "title": "Enjoy the hype before your soul gets crushed",
-    "start_time": 1024.7,
-    "end_time": 1095.2,
-    "score": 85,
-    "hook_sentence": "If there is a chance and you love a property, then you owe it to give them a chance.",
-    "virality_reason": "A passionate, quotable rant about fan cynicism over the live-action Cowboy Bebop that ends on a perfect punchline and invites fans to argue in the comments.",
+    "title": "How to fix the Mario movie",
+    "start_time": 1664.3,
+    "end_time": 1701.75,
+    "score": 90,
+    "hook_score": 84,
+    "shareability_score": 78,
+    "hook_sentence": "I have one tweak that I absolutely guarantee would make a better movie.",
+    "on_screen_hook": "One tweak to fix the Mario movie",
+    "virality_reason": "An instantly imaginable, funny hot take with a strong curiosity hook.",
+    "llm_start_time": 1664.4,
+    "llm_end_time": 1701.0,
+    "chunk_score": 80,
+    "post": {
+      "title": "The Mario movie fix nobody asked for",
+      "caption": "Same cast, live action, Jack Black in a Bowser suit. Would you watch it?",
+      "hashtags": [
+        "#mariomovie",
+        "#jackblack",
+        "#chrisprattmario",
+        "#nintendo",
+        "#podcastclips"
+      ]
+    },
     "clip_url": "output/short_01.mp4"
   },
   {
-    "title": "Squid Game is too violent for Korean TV",
-    "start_time": 2439.2,
-    "end_time": 2544.4,
-    "score": 84,
-    "hook_sentence": "This one is only on Netflix. It's way too violent for Korean television.",
-    "virality_reason": "An early, enthusiastic recommendation of a show that became a global phenomenon, with a curiosity-driving premise and a forbidden-content hook.",
+    "title": "Too violent for Korean TV",
+    "start_time": 2471.84,
+    "end_time": 2533.25,
+    "score": 88,
+    "hook_score": 88,
+    "shareability_score": 80,
+    "hook_sentence": "This one I'm about to tell you is only on Netflix. It's way too violent for Korean television.",
+    "on_screen_hook": "The show too violent for TV",
+    "virality_reason": "A forbidden-content hook for a show that became a global phenomenon, with a curiosity-driving premise.",
+    "llm_start_time": 2471.9,
+    "llm_end_time": 2533.8,
+    "chunk_score": 84,
+    "post": {
+      "title": "The show too violent for Korean TV",
+      "caption": "Debt, a game, and deadly stakes. Did you see this one coming?",
+      "hashtags": [
+        "#squidgame",
+        "#netflix",
+        "#kdrama",
+        "#tvrecommendations"
+      ]
+    },
     "clip_url": "output/short_02.mp4"
   },
   {
     "title": "The most nonsensical movie ever made",
-    "start_time": 2204.5,
-    "end_time": 2258.4,
+    "start_time": 2205.46,
+    "end_time": 2258.14,
     "score": 82,
+    "hook_score": 78,
+    "shareability_score": 86,
     "hook_sentence": "Chekhov's gun is a dramatic principle... this movie does away with that. None of it makes any sense.",
-    "virality_reason": "An infectiously gleeful rave about a so-bad-it's-magnificent Lifetime movie makes viewers want to watch it themselves.",
+    "on_screen_hook": "This movie breaks every rule",
+    "virality_reason": "An infectiously gleeful rave about a so-bad-it's-magnificent movie that viewers will want to watch and send to friends.",
+    "llm_start_time": 2205.5,
+    "llm_end_time": 2257.5,
+    "chunk_score": 84,
+    "post": {
+      "title": "This movie breaks every rule of storytelling",
+      "caption": "So bad it's magnificent. What's the worst movie you loved anyway?",
+      "hashtags": [
+        "#lifetimemovie",
+        "#badmovies",
+        "#chekhovsgun",
+        "#movietok",
+        "#podcastclips"
+      ]
+    },
     "clip_url": "output/short_03.mp4"
   }
 ]

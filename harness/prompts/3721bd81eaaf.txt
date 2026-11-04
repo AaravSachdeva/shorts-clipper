@@ -1,0 +1,355 @@
+You are an elite short-form video editor who has studied thousands of viral clips on TikTok, Instagram Reels, and YouTube Shorts. You know exactly what makes viewers stop scrolling, watch to the end, and share.
+
+
+Virality signals to prioritize (ranked by impact):
+1. HOOK MOMENTS — statements that create immediate curiosity ("The secret is...", "Nobody talks about...", "I was completely wrong about...")
+2. EMOTIONAL PEAKS — genuine surprise, laughter, anger, vulnerability, excitement; raw unscripted reactions
+3. OPINION BOMBS — strong, polarizing or counter-intuitive statements that trigger agree/disagree
+4. REVELATION MOMENTS — surprising facts, stats, or confessions that reframe how the viewer thinks
+5. CONFLICT/TENSION — disagreement, pushback, or a problem being confronted head-on
+6. QUOTABLE ONE-LINERS — a sentence that works as a standalone quote card
+7. STORY PEAKS — the climax or twist of an anecdote; the payoff moment
+8. PRACTICAL VALUE — a concrete tip, hack, or insight the viewer can immediately apply
+
+
+What YouTube Shorts and Instagram Reels reward (judge every clip against this):
+- The first 1-3 seconds decide whether viewers swipe away. The clip's very first sentence must be its hook: no greetings, no setup, no "so"/"yeah"/"anyway", no reaction to something the viewer hasn't seen.
+- Completion matters more than length: a tight 30-second clip watched to the end beats a 60-second clip abandoned halfway. Choose the shortest version that still lands.
+- Instagram weighs sends (DM shares) heavily: favor moments someone would send to a friend because they are relatable, surprising, funny, or quotable.
+- Viewers have never seen this show: each clip must make sense on its own.
+
+Content type: podcast | Density: medium
+
+Your task: identify the most viral-worthy highlights from the transcript.
+
+Rules:
+- start_time is the timestamp of the clip's hook sentence: the clip opens on that sentence
+- Duration: aim for 20-60 seconds. Go up to 90 seconds only when a story needs the full arc to land. Never shorter than 12 seconds
+- end_time lands right after a payoff (punchline, conclusion, reaction); never cut mid-sentence or mid-thought
+- NEVER select ads, sponsor reads, trailers for other shows, appeals to support the show (Patreon, merch, "like and subscribe"), intros, or outros
+- Clips must not overlap significantly with each other
+- score: 0-100 overall viral potential (not general quality). hook_score: 0-100 strength of the first sentence on its own. shareability_score: 0-100 how likely a viewer sends it to someone
+- hook_sentence: the clip's opening line, quoted from the transcript
+- on_screen_hook: 3-8 words of overlay text for the first seconds that creates curiosity without spoiling the payoff (no hashtags, no emojis)
+- virality_reason: one sentence on why this clip will perform
+- Generate at least 6 highlights
+
+Respond ONLY with valid JSON (no markdown, no explanation):
+{"highlights":[{"title":"string","start_time":float,"end_time":float,"score":int,"hook_score":int,"shareability_score":int,"hook_sentence":"string","on_screen_hook":"string","virality_reason":"string"}]}
+
+Transcript:
+[0.0s] Every year on their anniversary, Harold would plan a trip.
+[3.9s] The firing train, and it's my brother.
+[5.9s] My brother said Tony's been in an accident.
+[8.5s] She was gone.
+[10.7s] Now we have an investigation we have to conduct.
+[15.2s] There were small things that didn't totally add up.
+[17.9s] It was an obscure area.
+[19.2s] It was just so steep.
+[22.3s] He said he was doing CPR the whole time.
+[25.2s] Her lipstick was not smudged.
+[27.7s] There was something more to this story.
+[29.3s] Most people didn't know that Harold was married before this is two hives for Harold that have died now and that was very suspicious
+[36.7s] Yeah, look, I swear we didn't do it. It's time for the show
+[51.3s] Welcome to court killers the show about watching the stuff you love when you want where you want however you want
+[55.9s] I'm Tom Merritt. Hey, I'm Brian brushwood more importantly
+[58.3s] Who is that accusing us of having committed a crime and plus we have an alibi? I swear, I don't think that was about us
+[64.3s] That was a phone call that was a video kind of scanty pants. I'm not gonna lie
+[68.7s] That was a trailer for Hulu's upcoming series wild crime about the mysterious death of Tony Henthorn in the Rocky Mountain
+[76.4s] National Park there are gonna be four episodes
+[78.7s] The first one is dropping on Tuesday this week. The rest are coming out every day between now between now and Friday
+[85.0s] So that's gonna be four episodes coming to Hulu.
+[87.3s] White millennials do love their true crime.
+[89.4s] You know who doesn't have an alibi,
+[91.9s] who I think they should talk to
+[93.5s] about what happened at this time,
+[95.6s] is a Seen That Zone Aya's Hector!
+[98.6s] Hello, everybody!
+[99.8s] We're celebrating a huge milestone today
+[102.8s] because I'm in my fabulous studio,
+[105.0s] and I found this.
+[106.4s] My note from the last episode I was on.
+[110.7s] It's still a thing, everybody, so I'm really excited.
+[113.7s] It's like, how did you know?
+[115.3s] How did that's just crazy that, you know, wow.
+[118.5s] Well, folks, people used to joke in the early days of court killers
+[124.2s] and its predecessor frame rate that we were just a Netflix show.
+[128.1s] All we did was talk about Netflix.
+[130.0s] Well, this time it's true time for our primary target.
+[138.0s] Netflix made all the news this week in part thanks to a fan event
+[143.2s] called Tadum after the sound, you know, the Netflix sound, that took place on
+[148.8s] Saturday. We will start, however, with the the non-Tadum news and then move
+[154.5s] quickly through some, but not all of the content announcements or we'd be here all
+[158.1s] day. First, upload VR. Notice that back on April 20th, Netflix listed a VR game
+[163.0s] called Eden Unearthed on Oculus's App Lab platform for experimental games.
+[168.2s] The game works on the Oculus Quest and Quest 2 is free and is related to
+[173.1s] the Netflix anime series Eden.
+[175.8s] So I've been thinking, ah, they'll just do mobile.
+[178.5s] And I guess VR kind of mobile with the Oculus
+[180.8s] because it's not wired, but doing VR too,
+[183.0s] looks like, at least experimenting.
+[184.8s] The nice thing about the VR reach is that people
+[187.1s] who are into VR are pretty voracious for VR content.
+[190.9s] So that's a smart play.
+[193.1s] Of course, not as many people have VR as have mobile devices.
+[196.7s] I have no interest in VR.
+[197.8s] I'm sorry.
+[198.5s] I'm crazy.
+[199.1s] I feel like this is a maybe someday
+[201.8s] this will become something. So let's keep trying it until it does. Netflix also launched a free
+[208.7s] mobile version of their service in Kenya. You do have to sign up for a Netflix account,
+[213.6s] but you don't have to pay anything. And there are no ads. Anyone older than 18 with an Android
+[219.5s] phone can get the free plan, which gives access to about 25% of the Netflix catalog in
+[225.3s] Kenya. Although that does include some full series. The idea seems to be to entice
+[229.6s] people don't want to watch the rest of the catalog or to get tired of watching on their
+[234.6s] phone and watch on a TV or laptop. Netflix has previously done free trials, of course,
+[239.3s] and they offer a mobile service for about three bucks US in India, but this is certainly the most
+[246.0s] expansive free version of the service that Netflix has tried. So in our entire run, Tom,
+[252.5s] I don't think we ever considered this possibility. We've talked about gated stuff,
+[256.6s] trial stuff. We've talked about ad supported all kinds of different ways to give people
+[263.0s] a taste. But this idea of the crack cocaine model of just like have some for free. It's
+[269.6s] really good. It's Netflix is brilliant. I it has no friction to entry and it's limited
+[276.6s] in all the right ways where if you care, if you like the ecosystem, you get to dive
+[281.1s] in and plus they can always change which 25% they're showing.
+[284.8s] Yeah, right. That's super interesting. You want to keep getting more and more subscribers,
+[289.2s] give it away for free. And then if you go to your TV, it could be pretty big, pretty big.
+[294.4s] I'm trying to remember. I think the wildest thing we ever thought was like Netflix might
+[298.3s] do one of those linear channels like a Pluto TV or HBO thing. Yeah, you wouldn't be able to
+[303.1s] pick what you watch, but you could tune in and see stuff. So yeah, 25% just for free,
+[309.9s] just for free. And they're trying it out in Kenya. If it works in Kenya,
+[312.2s] they might take it to other markets, but they said this is very tailored to what we know about
+[316.1s] the market in Kenya. So Netflix acquired the Roald Dahl Story Company, which administers the
+[321.7s] rights to the works of the late author Roald Dahl. Netflix had already reached a deal. If
+[326.3s] you're like, wait, didn't they have something going on? They'd reached a deal with the company
+[329.9s] in 2018 to create several animated TV shows, including one based on Charlie and the Chocolate
+[334.6s] Factory, coming from Phil Johnston and Tycho A.T.T. and an adaptation of Matilda the
+[339.2s] musical with Sony working title, but now, once this closes,
+[343.3s] Netflix will be able to adapt all of Dahl's works unless
+[346.5s] they are already licensed to other companies under existing
+[349.4s] agreements. Netflix says all 26 of the employees of RDSC will
+[354.5s] remain. The company will work as an autonomous unit under
+[357.9s] Netflix, and it will continue to develop and expand on the
+[360.8s] 19 TV shows, films, stage shows and live experiences
+[363.7s] currently being worked on. So I mean, Netflix isn't
+[367.5s] be coming a publishing company, but they're now going to rake in some money off of Roald
+[371.7s] Dahl's books that are published. So expect Netflix tie-in versions of all that stuff
+[376.1s] to show up for sure.
+[377.2s] Yeah. I'm the IS actor of this one. I don't have any interest in Roald Dahl stuff.
+[384.0s] Oh, it's always big when Netflix is picking up companies and when they bought the Miller
+[387.4s] verse from Mike Millar. I've been staying wrong. That was a big deal. So I'm really
+[390.5s] curious what kind of other properties we're going to see made on Netflix and then remade
+[394.6s] and canceled and remade, et cetera.
+[398.3s] Yeah, that's what I look at. This is like either a portion of the other shoe or the
+[404.1s] blazes or something has dropped where Miller was the was the first. And I was like, okay,
+[409.5s] they'll level up. They'll try this, then they'll get a little bigger. This time they got
+[412.8s] a little bigger with Roald Dahl, Charlie, the chocolate factory, a very famous doll
+[417.7s] work and James and the giant peach and a bunch of other stuff that has been remade
+[421.9s] over and over. Yeah. So what's next? What becomes the full dropping of the shoes? If
+[428.1s] that wasn't enough on Monday, the Code Conference, Netflix co-CEO Ted Serendouse shared numbers,
+[435.2s] actual numbers of the accounts that had viewed its top 10 films in series. A view,
+[442.4s] of course, in Netflix's opinion, is at least two minutes during the first 28 days
+[446.6s] of availability. Bridgerton led the way for series with 82 million and the film extraction
+[451.7s] the Chris Hemsworth vehicle led the way for movies with 99 million.
+[457.0s] Serendos also shared a slide of total hours viewed in its first 28 days. Bridgerton leads
+[462.3s] that chart as well. But Bird Box swaps places with extraction and takes the top spot in
+[468.9s] number of hours watch. So apparently more people quit extraction than Bird Box.
+[473.3s] I as I want to get your take on this now some numbers are better than no numbers if you're curious like we are
+[479.5s] But I mean two minutes equals a view. I mean that's like
+[484.6s] What you pay full price you walk in Avengers Endgame and you watch two minutes and leave does that mean you watch the movie?
+[492.4s] Well, I mean you're aware of it at least you know that at least you made it to the title screen like okay
+[495.9s] That's a thing. I know it's a thing and you can kind of talk about it in an educated way
+[499.8s] I am surprised they're giving out numbers at all.
+[502.4s] It just seems like a strange thing.
+[503.9s] The Netflix for years didn't bother with this.
+[505.4s] Why start now?
+[507.5s] Braggen, Braggen writes.
+[508.8s] They want to show the other producers out there like,
+[511.8s] oh yeah, we got people watching.
+[513.2s] You may not see us in theaters.
+[514.8s] We may not get those box office numbers.
+[516.9s] And actually, this is a pretty good preventative measure.
+[520.9s] If what they have is a dominant market position
+[523.7s] and they're aware that everybody else
+[526.2s] is going to be shouting numbers.
+[527.7s] Disney Plus is going to be shouting numbers.
+[529.2s] who's going to be shouting numbers, all that stuff. And so by anchoring these bigger numbers,
+[535.3s] like it doesn't matter. In fact, you would want to use a BS metric like the first two minutes
+[540.3s] so that you have in your mind the idea of like, well, Netflix does 100 million views. So as a
+[545.5s] result, it doesn't sound impressive when other press releases come out. You know, I want to
+[551.8s] push back a little on the idea that two minutes is a BS number. If you sit for two
+[556.5s] minutes, you're likely to keep sitting. And if you look at the list of total hours viewed,
+[563.3s] it kind of tracks. Most of the stuff that shows up on the on the views side shows up
+[568.6s] in the total hours track, you know, are pretty close bird box and extraction. Great examples.
+[572.4s] They just flip flop places. So I don't think it's totally a BS number. I think it might
+[577.5s] be smarter for them to look at it and say, well, the 15 minute number is not that
+[583.1s] much different from the two minute number. Let's call it 15 minutes because that sounds
+[586.8s] better. But I bet there's a reason why they're like, no, two minutes is a perfectly valid
+[591.6s] number because they use it for internal metrics, too. And they wouldn't want to use a BS number
+[595.2s] for internal metrics.
+[596.7s] That's a good point because also keep in mind the idea of sort of attention loss
+[602.0s] leaders where it's like, you think you want to sign up for Netflix because you
+[606.2s] think you're going to love this series that's based on the books that you know.
+[609.8s] And then you try it and it's not really what you want. You're still signed up to Netflix and you're still and then now
+[615.1s] You're gonna find the thing that you do love so in that regard. Yeah, no, I could I could be on board with that
+[620.0s] And then also after the two minutes you have like an infinite options to get out
+[623.6s] You could view something else so that if you actually stick like Thomas saying if you are sticking around for two minutes
+[627.6s] I mean you have the option to jump out already. There's not like it's everything's on demand
+[631.7s] You're choosing to watch it
+[632.6s] so I think that number may not be too great, but I'm sure once the numbers are like
+[636.6s] If completion rates were super high, they'd be talking about that too.
+[640.3s] I'm not trying to argue that two minutes is like, it's a perfectly great number, but it's
+[644.5s] probably not as bad as it sounds, is my guess.
+[647.6s] Alright, Netflix had their own little like online con on Saturday.
+[654.0s] They call it to dumb after that Netflix sound that plays when you start a Netflix show.
+[659.3s] And in honor of that, I will be reading all the announcements.
+[662.6s] and I, as in Brian, will each respond
+[665.6s] with two syllable answers mimicking the sound, ta-dum.
+[671.7s] Here we go.
+[672.6s] Ready.
+[673.0s] First look at the Sandman, no premiere date.
+[676.7s] Okay.
+[678.4s] DC.
+[680.4s] Stranger Things teaser, new location shown called
+[683.6s] The Creel House coming 2022.
+[685.9s] Past it.
+[688.5s] Boring.
+[691.1s] opening sequence for live action cowboy Bebop coming November 19th. Awesome. Bebop. The Witcher
+[699.2s] multiple teasers for season two behind the scenes look at the prequel series blood origin
+[704.2s] and official approval of a third season of the Witcher. Don't know. Cavill teaser for
+[715.1s] Bridgerton season two coming 2022.
+[719.0s] Dunno. Smutty.
+[724.8s] Trailer for Army of Thieves, the prequel to Army of the Dead coming October
+[728.9s] 29th. Hard pass, Snyder.
+[733.3s] Trailer for Comet Disaster Movie Don't Look Up, which stars Meryl Streep,
+[737.7s] Jennifer Lawrence, Leonardo DiCaprio and Jonah Hill coming December 24th
+[741.9s] and to select theaters. Look out.
+[745.1s] I agree.
+[748.7s] Arcane, a series based on the Game League of Legends
+[751.7s] with new trailer and a premiere date of November 6th.
+[754.5s] Smart play.
+[756.5s] Cartas.
+[758.2s] The chat room is getting it on this too.
+[761.0s] Studio Colorado's next anime will be Drifting Home,
+[764.5s] a story about two childhood friends
+[767.2s] that drift into a mysterious sea
+[768.7s] alongside an entire housing complex coming 2022.
+[772.5s] What?
+[775.5s] What?
+[776.9s] I don't know.
+[779.7s] First look at the conspiracy theory cartoon inside job coming October 22nd.
+[785.5s] Building seven inside.
+[788.8s] We'll allow it.
+[789.9s] Cobra Kai season four coming December 31st.
+[793.6s] Still going.
+[795.5s] Johnny.
+[798.1s] First look at a documentary on Kanye West called Jean.
+[802.8s] Yes.
+[803.2s] Yes. Come in 2022. Who's that?
+[809.3s] Tiger King to new trailer coming November 17th.
+[814.0s] It's a new trailer and it's coming November 17th. Wait, what?
+[821.5s] Don't care.
+[823.9s] Teaser for Ozark season four, which is coming out 2022.
+[827.4s] Well, wait, still on.
+[831.3s] Money Heist season five, volume two announced to be coming in December.
+[836.3s] Don't know.
+[839.7s] Don't know.
+[842.3s] Kick it around now.
+[843.8s] We're almost to the end.
+[845.7s] Sex education, which just premiered on Netflix renewed for season three.
+[850.4s] Susie.
+[852.2s] Sounds good.
+[854.1s] Teaser for Emily and Paris season two, which will be coming November 22.
+[858.2s] second. Okay. Our audience teaser from Emelda Stanton, who will play Queen Elizabeth in season
+[868.6s] five of The Crown, announcing that it will be coming in November 2022, November next
+[873.0s] year. Who's that imperialism teaser for super crooks coming November 25th. Okay. Super.
+[884.5s] We got three more left three more left hell bound a trailer for a show premiering November
+[892.4s] 19th horror film. Oh no. Missed it.
+[899.0s] Teaser for extraction to the most popular Netflix movie of all time extraction gets a
+[904.6s] sequel starring Chris Hemsworth coming soon to men's Hemsworth. Yeah. Yeah. All right.
+[913.0s] That's it. That's not everything they announced there's there's probably a half dozen things that we left out
+[918.2s] But I think that's enough for now. Do y'all have anything you want to expand on your your two syllable reactions?
+[924.5s] I do I do want to share one hot take which is
+[928.3s] The jaw-dropping response I had to that cowboy bebop opening credit sequence
+[933.1s] Did either of you guys watch the original cowboy bebop? Did you have a feeling when you saw the live-action version of it?
+[940.8s] I thought the live-action one would make me
+[943.6s] nervous, but it was actually actually looked pretty good.
+[947.0s] So I'm hope I was really hard to release that opening opening
+[951.7s] sequence because it it sort of relaxed the part of me that was
+[955.9s] like, it's kind of be weird to be live action because it's not
+[959.2s] live action entirely in the opening sequence. It's you
+[961.8s] know, it's an opening sequence. They always have
+[963.6s] animation and opening sequence and it just kind of kind of
+[966.2s] makes you feel a little more comfortable. Well, here's the
+[968.7s] part that really surprised me when the announcement first
+[971.3s] came out, everybody trembled with fear and cynicism in an insulation to say like,
+[979.0s] we don't want it, we don't need it, you're going to screw it up, you know, and really all they're
+[982.6s] saying is, I love Cowboy Bebop very much and I'm afraid that you will not do it justice and make
+[987.5s] me embarrassed to be a fan. And I thought that this was about as loud and as clear a press
+[994.4s] release that you these are those the fans are who they're working very very hard to
+[1000.3s] please and instead of anybody being converted because I am somebody who
+[1005.4s] believes that if you love something and if there's a one in a hundred chance
+[1009.3s] that they that they can capture that magic again and and heaven forbid maybe
+[1014.1s] even bring you more like remember that feeling like like the the first episode
+[1017.3s] of the Mandalorian like there's a lot of Star Wars garbage but damned if that
+[1021.3s] first episode of Mandalorian didn't bring back some of that new hope
+[1023.8s] energy. If there is a chance and you love a property, then you owe it to give them a chance.
+[1029.8s] And it's not like they give you cynicism. You, I was right. It was stupid trophies.
+[1035.5s] So you're not winning anything. All you're doing is announcing that you're afraid. Now,
+[1039.5s] I thought that this opening credit sequence would calm people and maybe convert them.
+[1045.4s] But instead, everybody who was skeptical at first and just dug in their heels. And
+[1050.3s] And you know, even my own daughter, she was just like, no, dumb, should be 2D, blah, blah,
+[1055.7s] blah, not going to be good, not going to watch it.
+[1058.0s] And it's like, all you're saying, it's just, here's the point I made is, yes, statistically
+[1065.6s] speaking, it's very likely that this will disappoint.
+[1069.3s] In fact, let's just assume it will disappoint, which means that the best it will ever
+[1075.5s] feel, if you're a fan of Cowboy Bebop, is the giddy excitement about what might be.
+[1080.7s] So if this release of this opening credit sequence is the best it's going to be, it'd
+[1086.7s] be a shame if you didn't even bother to enjoy this part, because so, so, so open up your
+[1091.3s] hearts and at least enjoy the giddy optimism before your soul gets crushed.
+[1095.0s] Can I talk about Cobra Cry?
+[1096.3s] Yes, yes.
+[1096.6s] I'm really excited about that.
+[1097.7s] Okay.
+[1098.2s] So I did watch Cobra Cry way back when it was on YouTube, I think it was red
+[1101.1s] at the time, now it's premium.
+[1102.2s] And I'm really glad that Netflix picked it up and everyone was like, oh, it's a new show and everybody loves it
+[1106.9s] Season four looks really good. I'm really curious to see Johnny and Daniel working together. They've been so great
+[1114.6s] I'm just it's this show has been so ridiculously consistent and fun
+[1119.8s] And it's moving stories along although at the last season finale was a little ridiculous
+[1124.9s] It was still really good. So I'm really curious. I'm excited about Cobra Kai season four
+[1130.0s] can't wait to watch that because, I mean, these guys have done pretty much, the writers
+[1134.6s] have done pretty much no wrong except for the finale of the last season.
+[1137.8s] That's about it.
+[1138.7s] Yeah. Well, just a note to the Netflix folks out there. I know they're not going to organize
+[1144.5s] their behavior based on this show right here, but just, you know, worth considering.
+[1151.4s] If you had spaced these out over a couple of months, we would have given a two or
+[1156.0s] three minutes to each announcement, probably.
+[1158.3s] Instead, you got two syllables.
+[1160.2s] You know why?
+[1161.1s] Because our boss is in Netflix.
+[1162.9s] Our boss is the patrons, Brian.
+[1164.9s] That's right, man.
+[1165.7s] And look, we can shout outside of the walls of Netflix.
+[1169.3s] We want a new show.
+[1171.0s] We don't like the old show.
+[1172.1s] They ain't going to lift a finger.
+[1173.2s] They don't care.
+[1173.9s] But we do care, because you guys and our fabulous 1,000
+[1177.7s] plus bosses who keep us loud, live, and independent
+[1180.2s] for just $1 a week over at patreon.com
+[1183.0s] slash court killers are all that matters in our world.
+[1186.6s] You are two minutes.
+[1188.8s] You complete us.
+[1190.5s] You complete our budget.
+[1192.4s] Patreon.com slash court killers.
+[1195.6s] Let's talk about how to watch.
+[1201.0s] Let's try to take the following news
+[1202.8s] as a sign that multi-channel streaming services
+[1205.3s] like YouTube TV are now seen as valuable and likely
+[1208.8s] to survive and make money.
+[1210.1s] I mean, NBC is running scrolls and banner ads on the YouTube TV streams of its channels warning customers they could lose NBC own channels from YouTube TV if Google doesn't change its mind by September 30th and reach a deal.
+[1225.5s] There's even a website called you need channels.com where you can go and learn more and send feedback to YouTube TV about how not reasonable they are being to Comcast slash NBC universal.
+[1237.8s] So Google said in a blog post about this itself that it wants the same rates that services
+[1242.5s] of a similar size get from NBCU.
+[1246.3s] And if NBC blocks it from running its channels, it'll lower the price of YouTube TV by $10
+[1251.8s] a month for the period of time that the NBC channels are gone.
