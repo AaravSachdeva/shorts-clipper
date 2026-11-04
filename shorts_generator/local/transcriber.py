@@ -3,6 +3,7 @@
 Reads a local media file and returns the same shape the highlight generator
 expects: {duration, segments[start, end, text]}.
 """
+import json
 import os
 import re
 from pathlib import Path
@@ -16,6 +17,24 @@ def _transcript_cache_path(media_path: str) -> Path:
     cache_dir = Path(LOCAL_OUTPUT_DIR)
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir / (Path(media_path).stem + ".srt")
+
+
+def _json_cache_path(media_path: str) -> Path:
+    """Word-level transcript cache (segments + words). Preferred over .srt."""
+    return _transcript_cache_path(media_path).with_suffix(".json")
+
+
+def _load_json_cache(media_path: str) -> Optional[Dict]:
+    path = _json_cache_path(media_path)
+    if not path.exists() or path.stat().st_mtime < os.path.getmtime(media_path):
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not data.get("segments") or float(data.get("duration", 0)) <= 0:
+        return None
+    return data
 
 
 def _format_srt_timestamp(seconds: float) -> str:
@@ -97,24 +116,21 @@ def _resolve_device() -> str:
 
 def transcribe_local(media_path: str, language: Optional[str] = None) -> Dict:
     """Run faster-whisper on a local file path, caching the result as .srt."""
-    cache_path = _transcript_cache_path(media_path)
-    if cache_path.exists():
-        source_mtime = os.path.getmtime(media_path)
-        cache_mtime = cache_path.stat().st_mtime
-        if cache_mtime >= source_mtime:
-            print(f"[transcribe/local] reusing cached transcript: {cache_path}", flush=True)
-            cached = _load_srt_cache(cache_path)
-            # Treat empty cache as invalid (likely from a failed/partial run) — delete and re-transcribe
-            if not cached["segments"] or cached["duration"] <= 0.0:
-                print(f"[transcribe/local] cache is empty/invalid, deleting: {cache_path}", flush=True)
-                cache_path.unlink(missing_ok=True)
-            else:
-                print(
-                    f"[transcribe/local] {len(cached['segments'])} cached segments, "
-                    f"{cached['duration']:.0f}s of audio",
-                    flush=True,
-                )
-                return cached
+    cached = _load_json_cache(media_path)
+    if cached:
+        n_words = sum(len(seg.get("words") or []) for seg in cached["segments"])
+        print(
+            f"[transcribe/local] reusing cached transcript: {_json_cache_path(media_path)} "
+            f"({len(cached['segments'])} segments, {n_words} words)",
+            flush=True,
+        )
+        return cached
+    if _transcript_cache_path(media_path).exists():
+        print(
+            "[transcribe/local] found an .srt cache without word timings; re-transcribing "
+            "(captions and boundary snapping need word timestamps)",
+            flush=True,
+        )
 
     try:
         from faster_whisper import WhisperModel  # type: ignore
@@ -137,6 +153,7 @@ def transcribe_local(media_path: str, language: Optional[str] = None) -> Dict:
         "language": language,
         "beam_size": 5,
         "condition_on_previous_text": False,
+        "word_timestamps": True,
     }
     if LOCAL_WHISPER_VAD_FILTER:
         transcribe_kwargs["vad_filter"] = True
@@ -152,11 +169,18 @@ def transcribe_local(media_path: str, language: Optional[str] = None) -> Dict:
             "start": float(s.start),
             "end": float(s.end),
             "text": (s.text or "").strip(),
+            "words": [
+                {"start": float(w.start), "end": float(w.end), "word": w.word.strip()}
+                for w in (s.words or [])
+                if w.word and w.word.strip()
+            ],
         })
 
     duration = float(getattr(info, "duration", 0.0)) or (segments[-1]["end"] if segments else 0.0)
     print(f"[transcribe/local] {len(segments)} segments, {duration:.0f}s of audio", flush=True)
     transcript = {"duration": duration, "segments": segments}
     cache_path = _write_srt_cache(media_path, transcript)
-    print(f"[transcribe/local] wrote cache: {cache_path}", flush=True)
+    json_path = _json_cache_path(media_path)
+    json_path.write_text(json.dumps(transcript), encoding="utf-8")
+    print(f"[transcribe/local] wrote cache: {json_path} (+ {cache_path.name})", flush=True)
     return transcript
