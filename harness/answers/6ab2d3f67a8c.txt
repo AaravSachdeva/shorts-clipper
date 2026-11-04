@@ -1,0 +1,4 @@
+{"highlights":[
+{"title":"Nobody wants to be the one who makes the bold move","start_time":10.6,"end_time":38.8,"score":40,"hook_sentence":"When you're that big, there are quarterly reasons why nobody wants to put their job on the line.","virality_reason":"A relatable line about corporate risk-aversion, but it depends on earlier context."},
+{"title":"We're addicted to their money and love","start_time":98.9,"end_time":135.7,"score":25,"hook_sentence":"I'm too distracted looking at these beautiful patron names going by.","virality_reason":"A goofy outro bit; mostly a Patreon plug with little standalone appeal."}
+]}

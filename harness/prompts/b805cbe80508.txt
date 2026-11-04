@@ -1,0 +1,371 @@
+You are an elite short-form video editor who has studied thousands of viral clips on TikTok, Instagram Reels, and YouTube Shorts. You know exactly what makes viewers stop scrolling, watch to the end, and share.
+
+
+Virality signals to prioritize (ranked by impact):
+1. HOOK MOMENTS — statements that create immediate curiosity ("The secret is...", "Nobody talks about...", "I was completely wrong about...")
+2. EMOTIONAL PEAKS — genuine surprise, laughter, anger, vulnerability, excitement; raw unscripted reactions
+3. OPINION BOMBS — strong, polarizing or counter-intuitive statements that trigger agree/disagree
+4. REVELATION MOMENTS — surprising facts, stats, or confessions that reframe how the viewer thinks
+5. CONFLICT/TENSION — disagreement, pushback, or a problem being confronted head-on
+6. QUOTABLE ONE-LINERS — a sentence that works as a standalone quote card
+7. STORY PEAKS — the climax or twist of an anecdote; the payoff moment
+8. PRACTICAL VALUE — a concrete tip, hack, or insight the viewer can immediately apply
+
+
+Content type: podcast | Density: medium
+
+Your task: identify the most viral-worthy highlights from the transcript.
+
+Rules:
+- Every highlight must open with a strong HOOK — a line that grabs attention within the first 3 seconds
+- Duration sweet spot: 45-90 seconds. Go shorter (20-44s) only for a perfect standalone one-liner. Go longer (91-180s) only when a story arc needs full context to land
+- Never cut mid-sentence or mid-thought — each clip must feel complete and self-contained
+- Clips must not overlap significantly with each other
+- Score 0-100 on viral potential (not general quality)
+- Generate at least 6 highlights
+- For each highlight, identify the single best "hook_sentence" — the opening line that would make someone stop scrolling
+- Explain in one sentence why this clip is viral ("virality_reason")
+
+Respond ONLY with valid JSON (no markdown, no explanation):
+{"highlights":[{"title":"string","start_time":float,"end_time":float,"score":int,"hook_sentence":"string","virality_reason":"string"}]}
+
+Transcript:
+[1144.6s] their behavior based on this show right here, but just worth considering if you had spaced
+[1152.9s] these out over a couple of months, we would have given a two or three minutes to each announcement
+[1157.5s] probably instead, you got two syllables. You know why? Because our bosses and Netflix,
+[1163.1s] our boss is the patron's Brian. That's right, man. And look, we can shout outside
+[1167.1s] of the walls of Netflix. We want a new show. We don't like the old show. They ain't going
+[1172.5s] to lift a figure. They don't care. But we do care because you guys and our fabulous
+[1177.3s] 1000 plus bosses who keep us loud live and independent for just $1 a week over at patreon.com
+[1183.1s] life cord killers are all that matters in our world. You're our two minutes.
+[1188.8s] You complete us. Do you complete our budget?
+[1192.7s] That's for sure.
+[1194.5s] Slash cord killers. Let's talk about how to watch.
+[1201.3s] Let's try to take the following news is a sign that multi-channel streaming services like
+[1205.5s] YouTube TV are now seen as valuable and likely to survive and make money. NBC is running scrolls
+[1212.4s] and banner ads on the YouTube TV streams of its channels warning customers, they could
+[1218.0s] lose NBC own channels from YouTube TV.
+[1221.3s] If Google doesn't change its mind by September 30th and reach a deal, there's even a website
+[1227.2s] called you need channels.com where you can go and learn more and send feedback to YouTube
+[1232.8s] TV about how unreasonable they are being to comcast slash NBC universal.
+[1238.5s] Google said in a blog post about this itself that it wants the same rates that services
+[1242.7s] of a similar size get from NBC you.
+[1246.3s] And if NBC blocks it from running its channels, it'll lower the price of YouTube TV by $10
+[1252.0s] a month for the period of time that the NBC channels are gone.
+[1255.9s] And it directed people with a link to peacock of like, hey, you would, if you don't like
+[1261.1s] this and you want to cancel YouTube TV, you can go to peacock get NBC's stuff right
+[1265.3s] there.
+[1266.3s] want to content provider in a content carrier too far apart to reach an agreement. Both sides
+[1270.7s] start appealing to the customers with these kinds of pressures to try to put public pressure
+[1276.2s] on the other. It's a time-honored tradition in classic cable TV that is now carried over
+[1281.1s] to the streaming world pretty regularly. This is not the first time we've seen it. Variety says
+[1285.6s] NBC wants the higher rates we mentioned as well as to have YouTube TV bundle in peacock.
+[1291.2s] And my guess is, you know, they may, the channels might disappear September 30th, but eventually
+[1297.5s] they'll come back.
+[1298.5s] They'll figure out a deal.
+[1299.5s] Listen, Tom, there comes a time in the developing life of every over-the-top network, where they
+[1304.8s] may become irrascible, they may be starting picking fights.
+[1308.6s] They may have this flush of feelings they've never had before.
+[1312.2s] People who are friends are suddenly not friends with.
+[1315.5s] It's all part of the natural development.
+[1317.4s] I from what I'm so proud are YouTube TV's hip puberty.
+[1322.3s] Oh, look, it's going to love that.
+[1325.0s] I'm having flashbacks to Petaluma days.
+[1327.0s] It's like, oh, yeah, I remember all this stuff
+[1328.7s] would happen in a cable all the time.
+[1330.9s] Wow, it's happening now.
+[1332.0s] I mean, who would have thought this would happen?
+[1334.0s] Because it's exactly what's happened in the past.
+[1335.8s] So yeah, it's a mature service.
+[1338.6s] It's working, and obviously it's got Google money.
+[1340.2s] So, you know, universal one in that Google
+[1342.5s] money, not exactly too weird to hear.
+[1345.0s] And if Google is sending people to peacock warning, peacock is a terrible, terrible app on
+[1351.0s] least Android and on Apple TV.
+[1353.7s] So if you use it, I'm sorry for you because I use it and it's terrible.
+[1358.8s] The one thing I will say is usually these disputes come up when the margins are running thin
+[1363.8s] for one side or the other.
+[1366.6s] We saw a lot of this kind of stuff around dish.
+[1369.6s] condition was really like kind of scraping by but felt like they had the advantage of not
+[1375.9s] losing as many subscribers as traditional cable. And I imagine that Google's probably
+[1381.8s] running YouTube TV pretty close to the bone right now, as is NBC, just because of pandemics
+[1388.1s] and everything. So it's not shocking to me that this is going to happen.
+[1390.6s] This is this is really double dates or those early dates when both of them are so poor,
+[1395.5s] kind of push the bill back and forth towards each other. Yeah. Yeah. Yeah. Oh my gosh. That's
+[1401.4s] totally what's going on. And, and they're at a denys like the bills eight dollars. Yeah.
+[1409.2s] I should also disclose that my wife works for Rotten Tomatoes and Fandago, which is owned by NBC
+[1413.5s] Universal, which is the subject of that story. All right. Let's talk about what to watch in under
+[1417.6s] surveillance. Well, this is the big one.
+[1425.5s] you're like, wait a minute, you're not going to talk about the thing, you're going to
+[1428.4s] get all the way through the court killers and not talk about the thing.
+[1431.0s] No, we're going to talk about the thing.
+[1432.1s] Deadline reports, the CW is developing a new version of Babel on five, a from the
+[1439.9s] ground up reboot to be written by series creator, J Michael Strassinski and center around
+[1445.7s] the character of John Sheridan.
+[1448.8s] They did it, Tom.
+[1449.7s] the, the, the, the demon hordes, the barbarians at the gates, all of you guys, you kept on asking,
+[1456.7s] why did you guys watch Battle of Five? What's it going to take for us to watch Battle of Five?
+[1461.9s] Yeah, create a whole new version of it. Apparently, yes. And congratulations. We'll, we'll give it a try.
+[1468.7s] We're going to watch Battle of Five. Was the original angsty and teenager-y because
+[1473.5s] the CW, right? That's the worry, right? CWs usually like, I liked arrow and flash and all
+[1479.3s] those, but they were definitely angsty and teenagery nonetheless. So, so was, so was a, a battle
+[1487.2s] started to lack to come in a post 911 world as an allegory. I mean, it was, it was those
+[1493.6s] same adjectives. That was a sci-fi not CW. CW has a target market. So sure, sure.
+[1498.9s] I don't know. My hope is J Michael Strasinski being the writer means this is going to have
+[1507.3s] the feel of a Strasinski. But remember, he did sense eight. And so it's not necessarily
+[1513.8s] going to be the original Babylon five. He's, you know, he's, he's got other kinds of stories
+[1518.0s] to tell could be how dare I say it could be better.
+[1521.3s] Daryl.
+[1522.3s] He's got a low standards. I mean, it's gonna be better than batwoman, right? It's gonna
+[1525.1s] be better than battle on five. It's going to make people remember CW is around is what
+[1530.2s] it's going to do. What I want to know is CW's approach up until now has been free streaming
+[1536.0s] for the first five episodes or the most recent five episodes with commercials or get
+[1540.7s] it over the air or on a cable system. They have not done a streaming series or streaming
+[1545.3s] package. They have not partnered with any of the paid streaming out there. When you got
+[1552.0s] you've got a chance to launch something around that, right?
+[1556.0s] Like that's the kind of thing you launch
+[1558.0s] a new streaming service around, right?
+[1560.0s] Well, you were talking about like linking it
+[1562.0s] to the back catalog and everything.
+[1564.0s] Like maybe CW takes their free app and the seed app that they have
+[1568.0s] and they relaunch a paid service, maybe just pay to give it ads
+[1572.0s] or something like that.
+[1574.0s] Yeah, I mean, I can see that.
+[1576.0s] I mean, this certainly does have all,
+[1578.0s] you know, it feels like a tent pole opportunity.
+[1580.0s] I mean, the demographic, I think that Babylon,
+[1583.6s] forgive me, people, I love all of you,
+[1585.8s] but I think that the Babylon 5 loving community
+[1589.1s] is more your age, Tom, than my age, I mean.
+[1592.6s] Like, you know what, MTV had a good run doing that as well.
+[1596.1s] I mean, that Teen Wolf show was pretty good.
+[1597.8s] I did not watch the screen show,
+[1599.6s] but they've done a good job of taking some of these movies.
+[1602.1s] Well, I guess this was another series,
+[1603.6s] but they have a good, I think there's a good record
+[1606.2s] of bringing forward properties generation wise.
+[1609.7s] Yeah. Um, so yeah, it'll be interesting to see maybe CW just, you know, keep selling
+[1615.0s] it. It's back catalog out to HBO Max, which is kind of a part owner. Anyway, Warner is,
+[1621.3s] um, we'll, we'll find out Nintendo announced the cast for illuminations movie Mario based
+[1629.0s] on the character from Nintendo Mario, starring Chris Pratt as Mario on your Taylor Joy
+[1636.7s] from Queens Gambit fame as Princess Peach Charlie Day as Luigi Jack Black as Bowser Keegan
+[1643.8s] Michael key as Toad Seth Rogan as Donkey Kong and Fred Armason as cranky Kong with if
+[1650.2s] you're worried cameos from Charles Martinette who voices Mario in most of the games.
+[1654.9s] That's all coming to North America as a movie December 21st next year 2022.
+[1660.2s] This is going to be however good it's going to be.
+[1662.8s] Let's say it's pretty good.
+[1664.6s] I have one tweak that I absolutely guarantee
+[1668.0s] would make a better movie.
+[1670.0s] All these same actors, all these same roles, not animated.
+[1676.1s] Just Chris Pratt doing a Mario impression the whole time.
+[1678.2s] It didn't mean that.
+[1679.1s] Yeah, Jack Black all dressed up in a costume,
+[1682.9s] walkin' her ass back.
+[1684.4s] Come on, Bowser.
+[1685.9s] Come on, Jack Black.
+[1687.3s] As a live action Bowser is fantastic.
+[1689.5s] And if he's not promoting the movie,
+[1690.9s] Charlie Day is live action Luigi.
+[1693.2s] I'll Pepe solve it up.
+[1695.3s] I mean,
+[1696.9s] and Keegan Michael key as to live action would be freaking hilarious.
+[1700.3s] Uh, so are we do we know this isn't it does it does.
+[1705.2s] Illumination is a feature.
+[1706.7s] Illumination is an animation.
+[1708.0s] I did.
+[1709.0s] I actually looked it up just to make sure because the fantasy just took me.
+[1712.6s] So, right.
+[1713.6s] It's the first live action movie.
+[1715.5s] That's all.
+[1716.5s] Yeah.
+[1717.5s] Yeah.
+[1718.5s] Sure.
+[1719.5s] They're going to.
+[1720.5s] Apple TV released a trailer for Invasion,
+[1724.2s] starring Sam Neal about mysterious events
+[1726.5s] that seem related to aliens somehow,
+[1729.1s] perhaps an alien invasion.
+[1731.4s] But there's mysteries.
+[1732.8s] That's coming October 22nd, y'all watch anything.
+[1735.0s] I watched this trailer, and I was really struck
+[1741.0s] by, there was something very familiar about it.
+[1743.4s] I was like, what is it that's so familiar about it?
+[1745.3s] And I said, oh, that's right, everything.
+[1748.1s] Welcome to generic the movie.
+[1751.5s] Like play it and they're just literally named invasion.
+[1754.9s] Exactly, that's the one movie is called invasion.
+[1759.0s] It's every science, it's every, I didn't care for it Tom.
+[1766.1s] It's good SEO, dang it.
+[1767.6s] You've got Apple TV invasion movie that I guess it is.
+[1771.5s] Yeah, I got it right next to my all-purpose snack crackers
+[1775.1s] and beer.
+[1776.9s] in my Swiss army knife.
+[1778.4s] Um, I don't know.
+[1781.1s] I was on Ken Ray's show this week, and the one where we talk about Apple TV, it comes
+[1787.9s] out I think on Thursday, but sneak peek, he asked me about invasion, he says, are you
+[1792.2s] excited for it?
+[1793.2s] And I'm like, not especially.
+[1794.2s] I don't know, maybe I'll change my mind.
+[1798.1s] It's got Sam Neill.
+[1799.1s] Sam Neill's good.
+[1800.1s] Yeah.
+[1801.1s] Doing the one same look that he's done since Jurassic Park.
+[1804.3s] I was like, yeah, is that a meal from Jurassic Park? Oh, no, that's amazing. Okay. Neil Druckman,
+[1810.0s] one of the co-creators of Chernobyl, along with Craig Mazing, and who is also teaming
+[1813.9s] up with Craig on the last of us for HBO. Tweeted a picture from the fourth coming last
+[1818.7s] of us HBO series, just a still from behind of Pedro Pascal and Bella Ramsey as Joel and
+[1826.1s] Ellie looking at a hillside topped with wreckage. We go now to top last of us fan Brian
+[1831.6s] and brushwood for the reactions.
+[1833.2s] Well, Tom, as you know, I played both the last of us
+[1835.9s] and the last of us, too.
+[1837.1s] Played a multiple times with my children.
+[1839.0s] One of the most precious games in my entire world.
+[1841.3s] One of the first games to ever make me cry.
+[1843.2s] It has a very important place in my heart
+[1845.7s] and because I love this game so much,
+[1849.2s] I am hopeful that it'll be quite good.
+[1852.4s] I, as?
+[1856.2s] I was thinking that there's a missed opportunity
+[1857.7s] if this wasn't an interactive Netflix kind of thing.
+[1860.1s] I just did the thing that I told everybody not to do wow how cynical ooh
+[1867.1s] Why don't you enjoy things more?
+[1877.1s] The only thing I really really really need you to tell me Brian is what is on top of that hill?
+[1882.6s] Trouble that's for sure
+[1884.6s] looks like a plane.
+[1885.6s] Yeah, but that's not something where you would look at it and go, oh, that's the thing
+[1889.0s] from the one scene.
+[1890.3s] Here's what they don't tell you is that this scene is an uncut 15 minutes of the two of
+[1896.5s] them crouched, walking through that grass so as not to be detected.
+[1900.1s] Yeah, you can tell that's not from the game because there's a wide open space.
+[1903.6s] That's great.
+[1904.6s] Yeah.
+[1905.6s] Uh, finally, BBC announced that Russell T. Davis, who was the first showrunner when Dr.
+[1910.6s] who returned to air in 2005 will come back to succeed Chris Chibnall as Dr. Hues showrunner
+[1917.6s] in 2023.
+[1918.6s] That'll be just in time to celebrate the 60th anniversary of Dr. Hues.
+[1924.5s] This is inside baseball, but I know when I read the word of at the end, it just read
+[1932.7s] as this, this, this, this random blurt of like the 60th anniversary of Dr. Drew.
+[1938.7s] No, I am not the type of, it was great, it was a great moment for me, but, but, but you
+[1945.0s] guys are probably bigger doctor who fans than I am.
+[1949.3s] Is this a thumbs up or a thumbs down, I'm in the middle, I've never watched an episode
+[1954.5s] of Dr. who, well, all right, then I'll pick up the slack.
+[1959.5s] I really liked a lot of what Russell T Davies did. I also felt like he was a little cheesier
+[1965.7s] than the rest of them. So I was always excited to see what Stephen Moffat and the rest did
+[1971.0s] later. But David Tennant was my favorite doctor of that reboot. And so I'm very curious
+[1977.7s] what Russell T Davies may have learned in his time doing things like a British, very
+[1982.1s] British scandal and seeing what other people did with the doctor and coming back in time
+[1987.0s] for the 60th anniversary. I imagine we're going to get a lot of sentimental fan service-y type
+[1994.0s] things, which he was known for in his first run. So if you're not into that, you're probably
+[1998.3s] not going to like him coming back, but I'm going to eat that stuff up. I think it's fun.
+[2001.4s] I remember having, because I did watch the whole first season and I remember getting a distinct,
+[2005.9s] almost a hitchhiker's guide at the Galaxy kind of vibe, where there was like some, I remember
+[2010.8s] one of the episodes was that like the last living human was just a, a, a sheet of stretch
+[2015.9s] skin.
+[2016.9s] Yeah.
+[2017.9s] And they're all gathering.
+[2018.9s] Yeah.
+[2019.9s] Which, you know, spoiler, we, we find out the, I, not, not going to spoil, but there is
+[2023.9s] an identity to that sheet of stretch skin.
+[2025.9s] Oh, interesting.
+[2026.9s] Very important in universe.
+[2027.9s] Yeah.
+[2028.9s] All right.
+[2029.9s] A few other notes here.
+[2030.9s] Graham Norton is going to host Queen of the universe, a drag queen singing show for Paramount
+[2034.5s] Plus, a trailer for the movie Spencer, starring Kristen Stewart as Princess Diana was released.
+[2039.6s] a lot of people were commenting on how she nailed Diana's accent. That movie arrives
+[2043.9s] November 5, dairy girls, dear to my own heart. Love the show. We'll end though with season
+[2050.2s] three on channel four in Netflix. Disney Plus released a trailer for Muppets Haunted
+[2054.5s] Mashed. Manchin, a Halloween special coming October 8, two specials coming to Disney
+[2059.7s] Plus November 12, the origin of Boba Fett and another one that's around the Marvel
+[2065.9s] Cinematic Universe somehow. They didn't give a whole lot of other details. Marvel dropped
+[2069.4s] trailer for hit monkey series about a ghost of an assassin played by Jason Sudakus and
+[2075.7s] a hit monkey coming to Hulu November 17th and NBC picked up the night court sequel series.
+[2082.3s] Big Bang Theory's Melissa Rouch plays Harry Stone's daughter Abby Stone, who is a night court
+[2087.4s] judge.
+[2088.4s] And John Lerocat will return to reprise his character Dan Fielding.
+[2092.3s] I continued to be excited about the night court of sequel series hit monkey.
+[2097.7s] I was not familiar with the property.
+[2100.2s] The trailer itself didn't really surprise me with much.
+[2104.9s] Muppets, Haunted Mansion, I thought was an interesting play
+[2107.2s] because there's been talk about a haunted mansion movie
+[2110.1s] for the longest time.
+[2111.5s] I think at one point there was talk about Eddie Murphy,
+[2113.9s] starred vehicle, but always with the idea
+[2116.3s] of you had to stay the night.
+[2117.7s] The clever thing about a Muppets take on it
+[2120.1s] is you get to tell that same story, but not really.
+[2124.7s] you get to, it's sort of like releasing the Weird Out parody before the real song comes out.
+[2130.3s] And likewise, is it just me or from the trailer, did it look like this was very much a COVID
+[2136.4s] production where everybody who as a ghost was told, report to this studio and do your lines
+[2143.1s] in this green screen and don't worry, we'll cut it together. Whether it was COVID or not,
+[2148.0s] definitely report to this studio and do your lines to the green screen.
+[2151.5s] Right. For sure. And honestly, don't even mind. It's a Muppets movie. That's fine. I mean, it's not even a movie. It's a Muppets special. Yeah, if it's funny, I'll still enjoy it. Any
+[2159.5s] other thoughts on any of that? Nope. All right. Then tell us what you've had your eyes on. What have you been watching? I have been just so excited to talk about this movie.
+[2169.5s] It's called dying to marry him. It's a lifetime movie club original movie. It hasn't even aired on life. Wait, wait, lifetime movie club. How is that different from just lifetime movie?
+[2180.5s] have their own streaming service, okay? And it's really cheap. It's like about, I think
+[2184.3s] about five bucks a month. So it's about the same cost as Apple TV plus, which is kind
+[2188.1s] of ridiculous. Let me just tell you what the tagline is. I psychotic wedding planner hatches
+[2193.5s] a deadly scheme to marry her first love and childhood best friend. The amount of times
+[2198.6s] I was yelling at the screen because of check-offs gun, all right? I'm going to read this and
+[2204.5s] I'm going to explain. Check-offs gun is a dramatic principle that suggests that details
+[2207.9s] within the story or play will contribute to the overall narrative.
+[2211.2s] This movie does away with that.
+[2213.0s] None of it makes any sense.
+[2214.4s] If there's a detail in the movie, it has nothing to do with anything else in the movie.
+[2218.2s] It consistently breaks this rule for the entire run time.
+[2224.0s] Liz was on the couch with me with, and I had to pause this movie so many times.
+[2226.8s] I'm like, why is this happening?
+[2231.6s] It was just this amazing piece of work.
+[2235.2s] And I cannot believe it happened.
+[2236.4s] and the person who wrote the movie,
+[2238.2s] she's got like 77 credits,
+[2240.2s] and I've never seen anything this strangely done.
+[2243.8s] It's so, I don't want to say it's bad.
+[2245.9s] It's just magnificent.
+[2248.2s] If not for no other reason,
+[2251.0s] get Lifetime Movie Club for one month.
+[2253.4s] Watch this movie called dying to marry him.
+[2256.7s] It is mind-blowing.
+[2258.4s] I'm just now realizing the title
+[2260.2s] and what is probably the ending of this movie.
+[2263.9s] Oh, it doesn't matter.
+[2265.2s] That would make sense if Chekhov's gun was there instead, it's Chekhov's white noise
+[2273.2s] apparently.
+[2274.2s] It's Chekhov's camouflage.
+[2276.2s] It's just I've never seen anything like it and it's amazing and it's it's it's brand
+[2281.2s] new too.
+[2282.2s] So watch it.
+[2283.2s] I can't I can't say enough good things about this movie because it's just.
+[2286.2s] That's brilliant.
+[2287.2s] It makes you feel you've all that's what lifetime movies do they make you feel.
+[2293.2s] It really, you've, you've almost got me signing up for Lifetime Movie Club, right?
+[2298.2s] This is the, this is the best advertisement they've ever done.
+[2300.5s] I'm sorry to marry him.
+[2302.2s] Brian, what about you?
+[2303.6s] Do you have anything close to dying to marry him?
+[2306.0s] Oh, actually, I tread very lightly on this one because I watched a foundation and I thought
+[2315.0s] the first two episodes were quite interesting and compelling.
+[2319.6s] I made the mistake of four hours ago, saying I watched Foundation and the two people who had read the book and had not watched Foundation, immediately launched into...
+[2332.6s] Oh, yeah, in the books, I read it, read it, read it, read it, read it, read it, read it.
+[2336.6s] So I ain't readin' it in books, I ain't no book readin'.
+[2340.6s] Let me guess, let me guess, in the books there's a bunch of old white people who go white men who do everything.
+[2348.6s] Uh, I don't know what happened in the books, but I know I'd rather enjoyed a foundation.
+[2353.5s] What about you, Tom?
+[2354.5s] Yeah.
+[2355.5s] We, uh, we watched it together, Eileen and I, and, uh, she has never read the books.
+[2360.1s] She was constantly turning to me and saying, is that in the books?
+[2363.8s] And I was saying, maybe two out of every 10 questions, no, they changed that, uh, or
+[2370.7s] yes, that's in the book, but kind of different.
+[2374.4s] And most of the time going, I don't remember, I don't remember if that's in the book or not.
+[2378.5s] but so long since I read it and they're changed so much
+[2380.4s] so I can't keep track.
+[2381.7s] But that said, Eileen really enjoyed it too,
+[2384.0s] not having read the book.
+[2385.0s] And I am not religious about Isaac Asimov.
+[2389.4s] So I'm like, yeah, this is a perfectly great take
+[2391.7s] on the story, let's see where it goes.
+[2393.7s] And I think also, maybe this is also a part
+[2396.9s] of relating to the cowboy bebop thing.
+
+IMPORTANT: Return ONLY valid JSON with a top-level 'highlights' array. Each item must include: title, start_time, end_time, score, hook_sentence, virality_reason. No markdown fences, no commentary.

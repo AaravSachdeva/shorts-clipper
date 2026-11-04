@@ -171,9 +171,12 @@ def detect_content_type(transcript: Dict, llm_fn: LLMFn = call_muapi_llm) -> Dic
         return {"content_type": "other", "density": "medium"}
 
 
-def build_transcript_text(transcript: Dict) -> str:
+def build_transcript_text(transcript: Dict, offset: float = 0.0) -> str:
+    """Render segments as "[t s] text". For chunks, pass the chunk offset so the
+    timestamps shown to the LLM are chunk-relative — matching the offset that
+    get_highlights() adds back to the returned start/end times."""
     segments = transcript.get("segments", [])
-    return "\n".join(f"[{s['start']:.1f}s] {s['text'].strip()}" for s in segments)
+    return "\n".join(f"[{s['start'] - offset:.1f}s] {s['text'].strip()}" for s in segments)
 
 
 def chunk_transcript(transcript: Dict) -> List[Dict]:
@@ -190,7 +193,9 @@ def chunk_transcript(transcript: Dict) -> List[Dict]:
         if chunk_segs:
             chunk = dict(transcript)
             chunk["segments"] = chunk_segs
-            chunk["duration"] = end - start
+            # Chunks include up to CHUNK_OVERLAP_SECONDS past `end`; allow
+            # highlights in that tail instead of clamping them away.
+            chunk["duration"] = min(end + CHUNK_OVERLAP_SECONDS, duration) - start
             chunk["_offset"] = start
             chunks.append(chunk)
         start += CHUNK_SIZE_SECONDS - CHUNK_OVERLAP_SECONDS
@@ -290,7 +295,7 @@ def get_highlights(
         all_highlights: List[Dict] = []
         for i, chunk in enumerate(chunks):
             offset = chunk.get("_offset", 0)
-            text = build_transcript_text(chunk)
+            text = build_transcript_text(chunk, offset=offset)
             print(f"[highlights] chunk {i + 1}/{len(chunks)} (offset {offset:.0f}s)", flush=True)
             result = call_highlight_api(text, content_info, chunk["duration"], num_clips=num_clips, is_chunk=True, llm_fn=llm_fn)
             for h in result.get("highlights", []):

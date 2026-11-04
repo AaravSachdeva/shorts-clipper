@@ -1,0 +1,65 @@
+You are an elite short-form video editor who has studied thousands of viral clips on TikTok, Instagram Reels, and YouTube Shorts. You know exactly what makes viewers stop scrolling, watch to the end, and share.
+
+
+Virality signals to prioritize (ranked by impact):
+1. HOOK MOMENTS — statements that create immediate curiosity ("The secret is...", "Nobody talks about...", "I was completely wrong about...")
+2. EMOTIONAL PEAKS — genuine surprise, laughter, anger, vulnerability, excitement; raw unscripted reactions
+3. OPINION BOMBS — strong, polarizing or counter-intuitive statements that trigger agree/disagree
+4. REVELATION MOMENTS — surprising facts, stats, or confessions that reframe how the viewer thinks
+5. CONFLICT/TENSION — disagreement, pushback, or a problem being confronted head-on
+6. QUOTABLE ONE-LINERS — a sentence that works as a standalone quote card
+7. STORY PEAKS — the climax or twist of an anecdote; the payoff moment
+8. PRACTICAL VALUE — a concrete tip, hack, or insight the viewer can immediately apply
+
+
+Content type: podcast | Density: medium
+
+Your task: identify the most viral-worthy highlights from the transcript.
+
+Rules:
+- Every highlight must open with a strong HOOK — a line that grabs attention within the first 3 seconds
+- Duration sweet spot: 45-90 seconds. Go shorter (20-44s) only for a perfect standalone one-liner. Go longer (91-180s) only when a story arc needs full context to land
+- Never cut mid-sentence or mid-thought — each clip must feel complete and self-contained
+- Clips must not overlap significantly with each other
+- Score 0-100 on viral potential (not general quality)
+- Generate at least 2 highlights
+- For each highlight, identify the single best "hook_sentence" — the opening line that would make someone stop scrolling
+- Explain in one sentence why this clip is viral ("virality_reason")
+
+Respond ONLY with valid JSON (no markdown, no explanation):
+{"highlights":[{"title":"string","start_time":float,"end_time":float,"score":int,"hook_sentence":"string","virality_reason":"string"}]}
+
+Transcript:
+[0.5s] of the box itself.
+[2.0s] Maybe that's kind of that that denies them of five hundred and nine.
+[4.9s] that's a good point, saying like, well, you can offer it, but you know, we'd rather they get the
+[10.6s] book. It could be a tech thing too, right? Exactly. Having to build a new app to serve all of that
+[15.4s] service and you may not have it. In both situations, that could be why others haven't started it,
+[20.2s] but spectrum has the app. And yet they make it hard to get, I don't know. It could be that they're
+[27.0s] in a slow rollout experimental phase, you know, because look, I mean, when you're that big,
+[30.9s] big, there are quarterly reasons why nobody wants to put their job on the line to be the
+[36.7s] led to just a bold move.
+[38.8s] Well, I as act are you, my friend, are a bold move all your own, what do you got going
+[45.0s] on these days?
+[46.0s] Well, you could go to youtube.com slash CNET.
+[49.0s] We have tons and tons of videos there, so if you're like, what am I going to watch now?
+[52.9s] Just go there.
+[53.9s] It's plenty of stuff.
+[54.9s] There was this phone came out from that company and it makes that little TV box thing, Apple.
+[59.1s] There's a phone thing and we got all these reviews up and stuff like that. So check that
+[63.6s] out.
+[64.6s] Yeah. There's a great show called top five on Senate. You can, you can, it's been on for
+[69.8s] years too. You can go back and watch. That's why I'm wearing this shirt that says, that
+[73.3s] has a one on it. That's why I got a notepad that says top five is a thing. Yeah. I mean,
+[80.7s] there's also one on tech Republic, but that's a different company. Yeah. He's, he's tired.
+[87.2s] website is cord killers dot com our email addresses cord killers gmail dot com we're
+[90.8s] live on twitch dot tv slash night attack which is also carried on diamond club dot tv
+[94.6s] Mondays at seven p.m. Eastern four p.m. Pacific. We'll talk to you next time.
+[98.9s] Hey Tom Merritt. What's going on? I'm just hanging out here watching this scroll go
+[105.7s] by. What are you doing? Trying to set up a bit where we think are beautiful beautiful
+[109.9s] patrons. All these wonderful. I'm sorry. I'm too distracted looking at these beautiful
+[114.0s] beautiful patron names going by. Look at that one. I mean, if you wanted to be one of
+[117.5s] these people, patreon.com slash court killers would be the place to go. I mean, they're
+[122.9s] scratching our itch because we're addicted, as long as it's consensual, like we're addicted
+[128.4s] to their money and love might as well face it. Well, it got to it.
+[135.7s] time in club hopes you have enjoyed this program

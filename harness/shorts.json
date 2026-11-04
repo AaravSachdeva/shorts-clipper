@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Enjoy the hype before your soul gets crushed",
+    "start_time": 1024.7,
+    "end_time": 1095.2,
+    "score": 85,
+    "hook_sentence": "If there is a chance and you love a property, then you owe it to give them a chance.",
+    "virality_reason": "A passionate, quotable rant about fan cynicism over the live-action Cowboy Bebop that ends on a perfect punchline and invites fans to argue in the comments.",
+    "clip_url": "output/short_01.mp4"
+  },
+  {
+    "title": "Squid Game is too violent for Korean TV",
+    "start_time": 2439.2,
+    "end_time": 2544.4,
+    "score": 84,
+    "hook_sentence": "This one is only on Netflix. It's way too violent for Korean television.",
+    "virality_reason": "An early, enthusiastic recommendation of a show that became a global phenomenon, with a curiosity-driving premise and a forbidden-content hook.",
+    "clip_url": "output/short_02.mp4"
+  },
+  {
+    "title": "The most nonsensical movie ever made",
+    "start_time": 2204.5,
+    "end_time": 2258.4,
+    "score": 82,
+    "hook_sentence": "Chekhov's gun is a dramatic principle... this movie does away with that. None of it makes any sense.",
+    "virality_reason": "An infectiously gleeful rave about a so-bad-it's-magnificent Lifetime movie makes viewers want to watch it themselves.",
+    "clip_url": "output/short_03.mp4"
+  }
+]

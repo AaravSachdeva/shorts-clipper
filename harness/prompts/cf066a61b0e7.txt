@@ -1,0 +1,7 @@
+Analyze this video transcript sample and classify the content type.
+Choose one: podcast, interview, tutorial, lecture, commentary, debate, vlog, other.
+Also estimate content density: low (mostly filler/chit-chat), medium, or high (dense info/stories).
+Respond with JSON only: {"content_type": "...", "density": "..."}
+
+Transcript sample:
+Every year on their anniversary, Harold would plan a trip. The phone rang, and it's my brother. My brother said Tony's been in an accident. She was gone. Now we have an investigation meant to conduct her. There were small things that didn't totally add up. There was an obscure area. It was just so steep. He said he was doing CPR the whole time. Her lipstick was not smudged. There was something more to the story. Most people didn't know that Harold was married before. This is two lives for Harold that have died now, and that was very suspicious. Yeah, look, I swear, we didn't do it. It's time for the show! Oh! Oh! Oh! Oh! Oh! Oh! Oh! Oh! Oh!
