@@ -85,3 +85,88 @@ def test_move_missing_short(root):
 ])
 def test_parse_range(header, expected):
     assert parse_range(header, 1000) == expected
+
+
+# --- HTTP server -------------------------------------------------------------
+
+import http.client
+import threading
+from urllib.parse import quote, urlencode
+
+from review import make_server
+
+COOKIE = {"Cookie": "review=t"}
+
+
+@pytest.fixture
+def server(root):
+    srv = make_server(root, "t", "127.0.0.1", 0)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    yield srv
+    srv.shutdown()
+    srv.server_close()
+
+
+def _req(server, method, path, headers=None, body=None):
+    conn = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
+    conn.request(method, path, body=body, headers=headers or {})
+    resp = conn.getresponse()
+    data = resp.read()
+    conn.close()
+    return resp.status, resp, data
+
+
+def test_requires_cookie(server):
+    assert _req(server, "GET", "/")[0] == 401
+    assert _req(server, "GET", "/media/" + quote("Video A/short_01.mp4"))[0] == 401
+    assert _req(server, "GET", "/", {"Cookie": "review=wrong"})[0] == 401
+
+
+def test_token_login_sets_cookie(server):
+    status, resp, _ = _req(server, "GET", "/?token=t")
+    assert status == 303
+    cookie = resp.getheader("Set-Cookie")
+    assert "review=t" in cookie and "HttpOnly" in cookie and "SameSite=Strict" in cookie
+    assert _req(server, "GET", "/?token=nope")[0] == 401
+
+
+def test_page_lists_group(server):
+    status, _, body = _req(server, "GET", "/", COOKIE)
+    assert status == 200
+    assert b"Video A" in body and b"short_01" in body and b"Video B" in body
+    assert b'name="viewport"' in body
+    _, _, approved = _req(server, "GET", "/?status=approved", COOKIE)
+    assert b"short_02" in approved and b"Video B" not in approved
+
+
+def test_page_escapes_titles(root, server):
+    (root / "Video B" / "short_01.json").write_text(json.dumps({"post": {"title": "<script>x</script>"}}))
+    _, _, body = _req(server, "GET", "/", COOKIE)
+    assert b"<script>x" not in body and b"&lt;script&gt;x" in body
+
+
+def test_media_range(root, server):
+    path = "/media/" + quote("Video A/short_01.mp4")
+    status, resp, body = _req(server, "GET", path, {**COOKIE, "Range": "bytes=0-9"})
+    assert status == 206
+    assert resp.getheader("Content-Range") == "bytes 0-9/100"
+    assert body == b"0123456789"
+    status, resp, body = _req(server, "GET", path, COOKIE)
+    assert status == 200 and len(body) == 100 and resp.getheader("Accept-Ranges") == "bytes"
+    assert _req(server, "GET", path, {**COOKIE, "Range": "bytes=100-"})[0] == 416
+
+
+def test_media_traversal(server):
+    assert _req(server, "GET", "/media/..%2F..%2Fetc/passwd", COOKIE)[0] == 404
+    assert _req(server, "GET", "/media/" + quote("Video A/short_01.json"), COOKIE)[0] == 404
+
+
+def test_post_move(root, server):
+    form = {"group": "Video A", "name": "short_01", "to": "approved", "status": "pending"}
+    hdrs = {**COOKIE, "Content-Type": "application/x-www-form-urlencoded"}
+    status, resp, _ = _req(server, "POST", "/move", hdrs, urlencode(form))
+    assert status == 303 and resp.getheader("Location") == "/?status=pending"
+    assert (root / "Video A" / "approved" / "short_01.mp4").exists()
+    assert _req(server, "POST", "/move", hdrs, urlencode({**form, "to": "deleted"}))[0] == 400
+    assert _req(server, "POST", "/move", hdrs, urlencode({**form, "name": "short_09"}))[0] == 404
+    assert _req(server, "POST", "/move", {"Content-Type": hdrs["Content-Type"]}, urlencode(form))[0] == 401

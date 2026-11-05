@@ -191,6 +191,37 @@ Local downloads are also cached in `LOCAL_OUTPUT_DIR` as
 `source_<youtube_id>.mp4` when the input is a YouTube URL. If that file already
 exists, the app skips `yt-dlp` and reuses the cached video.
 
+### Review dashboard (approve or reject from your phone)
+
+`review.py` serves a small web page for reviewing local-mode shorts. Shorts are grouped by the long video they came from, and each card plays the clip and shows its title, caption and hashtags. Approve, Reject and Download buttons sit under each clip.
+
+1. Set `REVIEW_TOKEN` in `.env` to a long random string:
+   ```bash
+   python3 -c 'import secrets;print(secrets.token_urlsafe(24))'
+   ```
+2. Start the server:
+   ```bash
+   python review.py              # --host 0.0.0.0 --port 8765 by default
+   ```
+3. On your phone, connected to the same Wi-Fi, open `http://<this machine's LAN IP>:8765/?token=<REVIEW_TOKEN>` once. The page saves a cookie and then drops the token from the address bar. Bookmark `http://<LAN IP>:8765/`.
+
+Approve and Reject only move files, and nothing is ever deleted. A short's files (`.mp4`, `.json`, `.txt`) move into `approved/` or `rejected/` inside the video's folder:
+
+```
+output/
+  My Podcast Episode 12/
+    short_03.mp4  short_03.json  short_03.txt   ← pending
+    approved/short_01.mp4 …
+    rejected/short_02.mp4 …
+```
+
+"Move back" returns a short to pending. If a name is already taken, the moved file gets a suffix (`short_01-2.mp4`) and nothing is overwritten.
+
+Notes:
+- Local mode only. API mode returns hosted MuAPI URLs, not files.
+- The page is plain HTTP, so anyone on the same network can see the token in transit. Use it on your home Wi-Fi only, never exposed to the internet.
+- If your phone can't connect, the server's firewall may be blocking port 8765, for example `sudo ufw allow from 192.168.0.0/16 to any port 8765`.
+
 ### Batch processing
 
 Create a `urls.txt` file with one URL per line, then:
