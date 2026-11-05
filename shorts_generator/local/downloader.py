@@ -3,6 +3,7 @@
 Returns a local mp4 path so the rest of the local pipeline can read it
 directly off disk.
 """
+import json
 import os
 import re
 from pathlib import Path
@@ -92,6 +93,18 @@ def _existing_download(out_dir: str, video_id: str) -> Optional[str]:
     return None
 
 
+def video_title(source_path: str) -> str:
+    """Folder-safe name for a source video: its YouTube title, else the file stem."""
+    stem = os.path.splitext(source_path)[0]
+    try:
+        with open(stem + ".info.json", encoding="utf-8") as f:
+            title = str(json.load(f).get("title") or "")
+    except (OSError, ValueError):
+        title = os.path.basename(stem)
+    title = re.sub(r'[\\/:*?"<>|\x00-\x1f]', "_", title).strip(" .")[:100]
+    return title or "untitled"
+
+
 def download_youtube_local(video_url: str, fmt: str = "720", out_dir: Optional[str] = None) -> str:
     """Download a remote URL or return a local file path unchanged."""
     local_path = _resolve_local_path(video_url)
@@ -115,6 +128,7 @@ def download_youtube_local(video_url: str, fmt: str = "720", out_dir: Optional[s
         "format": _format_for(fmt),
         "outtmpl": os.path.join(out_dir, "source_%(id)s.%(ext)s"),
         "merge_output_format": "mp4",
+        "writeinfojson": True,  # source_<id>.info.json carries the title video_title() reads
         "quiet": True,
         "no_warnings": True,
         "noprogress": True,
