@@ -24,13 +24,14 @@ if hasattr(sys.stderr, "reconfigure"):
 # imported (config is read at import time); explicit env vars and CLI flags win.
 PROFILES = {
     # ~2 GB VRAM / 16 GB RAM, time is not a constraint (one long video a day).
+    # Whisper runs on the GPU in int8; Ollama splits layers between GPU and CPU itself.
     "cpu-slow": {
         "LLM_PROVIDER": "ollama",
         "OLLAMA_MODEL": "qwen3:8b",
         "OLLAMA_NUM_CTX": "16384",
         "HIGHLIGHT_CHUNK_SECONDS": "300",
         "LOCAL_WHISPER_MODEL": "large-v3-turbo",
-        "LOCAL_WHISPER_DEVICE": "cpu",
+        "LOCAL_WHISPER_DEVICE": "auto",  # GPU if CTranslate2 sees one, CPU fallback
     },
     # Same, but a ~14B model for better picks (close other apps; ~10-12 GB RAM).
     "cpu-quality": {
@@ -39,7 +40,7 @@ PROFILES = {
         "OLLAMA_NUM_CTX": "16384",
         "HIGHLIGHT_CHUNK_SECONDS": "300",
         "LOCAL_WHISPER_MODEL": "large-v3-turbo",
-        "LOCAL_WHISPER_DEVICE": "cpu",
+        "LOCAL_WHISPER_DEVICE": "auto",  # GPU if CTranslate2 sees one, CPU fallback
     },
 }
 

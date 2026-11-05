@@ -104,14 +104,56 @@ def _resolve_device() -> str:
     if LOCAL_WHISPER_DEVICE != "auto":
         return LOCAL_WHISPER_DEVICE
     try:
-        import torch  # type: ignore
-        if torch.cuda.is_available():
-            # Test that CUDA actually works (catches missing cuBLAS/cuDNN libs)
-            torch.zeros(1, device="cuda")
-            return "cuda"
+        import ctranslate2  # type: ignore  # ships with faster-whisper; no torch needed
+        return "cuda" if ctranslate2.get_cuda_device_count() > 0 else "cpu"
     except (ImportError, OSError, RuntimeError):
-        pass
-    return "cpu"
+        return "cpu"
+
+
+def _compute_type(device: str) -> str:
+    """Smallest fast type the device supports; int8 keeps large models inside a 2 GB card."""
+    if device != "cuda":
+        return "int8"
+    import ctranslate2  # type: ignore
+
+    supported = ctranslate2.get_supported_compute_types("cuda")
+    # Pascal cards (MX150, GTX 10xx) have no fast fp16, so they report no int8_float16.
+    for t in ("int8_float16", "int8"):
+        if t in supported:
+            return t
+    return "float32"
+
+
+def _preload_pip_cuda_libs() -> None:
+    """Load cuBLAS/cuDNN from the nvidia-*-cu12 pip wheels so CTranslate2 finds them.
+
+    The dynamic loader never looks inside the venv and LD_LIBRARY_PATH cannot change
+    for a running process, but a library already loaded under its soname is reused.
+    """
+    # shortcut: Linux library names only; Windows wheels ship DLLs under bin/, add them if needed
+    try:
+        import nvidia  # type: ignore  # namespace package of nvidia-cublas-cu12 / nvidia-cudnn-cu12
+    except ImportError:
+        return
+    import ctypes
+
+    for root in getattr(nvidia, "__path__", []):
+        for rel in ("cublas/lib/libcublasLt.so.12", "cublas/lib/libcublas.so.12", "cudnn/lib/libcudnn.so.9"):
+            lib = Path(root) / rel
+            if lib.exists():
+                try:
+                    ctypes.CDLL(str(lib), mode=ctypes.RTLD_GLOBAL)
+                except OSError as e:
+                    print(f"[transcribe/local] could not load {lib.name}: {e}", flush=True)
+
+
+def _run_whisper(WhisperModel, device: str, kwargs: Dict):
+    """Load the model on `device` and transcribe; the model (and its VRAM) is freed on return."""
+    if device == "cuda":
+        _preload_pip_cuda_libs()
+    model = WhisperModel(LOCAL_WHISPER_MODEL, device=device, compute_type=_compute_type(device))
+    segments_iter, info = model.transcribe(**kwargs)
+    return list(segments_iter), info  # segments decode lazily; GPU errors surface here
 
 
 def transcribe_local(media_path: str, language: Optional[str] = None) -> Dict:
@@ -141,12 +183,10 @@ def transcribe_local(media_path: str, language: Optional[str] = None) -> Dict:
         ) from e
 
     device = _resolve_device()
-    compute_type = "float16" if device == "cuda" else "int8"
-    print(f"[transcribe/local] faster-whisper model={LOCAL_WHISPER_MODEL} device={device}", flush=True)
+    print(f"[transcribe/local] faster-whisper model={LOCAL_WHISPER_MODEL} device={device} "
+          f"compute_type={_compute_type(device)}", flush=True)
 
     from ..config import LOCAL_WHISPER_VAD_FILTER, LOCAL_WHISPER_VAD_PARAMETERS
-
-    model = WhisperModel(LOCAL_WHISPER_MODEL, device=device, compute_type=compute_type)
 
     transcribe_kwargs = {
         "audio": media_path,
@@ -161,10 +201,16 @@ def transcribe_local(media_path: str, language: Optional[str] = None) -> Dict:
     else:
         transcribe_kwargs["vad_filter"] = False
 
-    segments_iter, info = model.transcribe(**transcribe_kwargs)
+    try:
+        raw_segments, info = _run_whisper(WhisperModel, device, transcribe_kwargs)
+    except RuntimeError as e:  # CUDA out of memory, missing cuBLAS/cuDNN, unsupported card
+        if device != "cuda":
+            raise
+        print(f"[transcribe/local] GPU failed ({e}); falling back to CPU", flush=True)
+        raw_segments, info = _run_whisper(WhisperModel, "cpu", transcribe_kwargs)
 
     segments = []
-    for s in segments_iter:
+    for s in raw_segments:
         segments.append({
             "start": float(s.start),
             "end": float(s.end),

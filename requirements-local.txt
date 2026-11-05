@@ -10,5 +10,5 @@ openai>=1.0.0
 google-genai>=1.0.0
 # OpenCV 5 removed CascadeClassifier, which the face-aware crop needs
 opencv-python>=4.8.0,<5
-# torch is only needed if you want CUDA Whisper. CPU works without it.
-# torch>=2.0
+# NVIDIA GPU for Whisper (Linux, ~1 GB): install these too. No torch needed.
+#   pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"

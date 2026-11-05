@@ -101,7 +101,7 @@ Don't want to self-host? The [AI Clipping API](https://muapi.ai/playground/ai-cl
    GEMINI_API_KEY=your_gemini_key_here
    GEMINI_MODEL=gemini-2.5-flash      # optional, default gemini-2.5-flash
    LOCAL_WHISPER_MODEL=base          # tiny / base / small / medium / large-v3
-   LOCAL_WHISPER_DEVICE=auto         # auto / cpu / cuda
+   LOCAL_WHISPER_DEVICE=auto         # auto (GPU if found, CPU fallback) / cpu / cuda
    LOCAL_OUTPUT_DIR=output           # where local mp4s land
    ```
 
@@ -192,6 +192,16 @@ Local transcription is cached in `LOCAL_OUTPUT_DIR` under the video's base name,
 Local downloads are also cached in `LOCAL_OUTPUT_DIR` as
 `source_<youtube_id>.mp4` when the input is a YouTube URL. If that file already
 exists, the app skips `yt-dlp` and reuses the cached video.
+
+### NVIDIA GPU (Whisper on GPU, Ollama split across GPU and CPU)
+
+```bash
+pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"   # CUDA 12 libraries for Whisper, ~1 GB
+```
+
+With `LOCAL_WHISPER_DEVICE=auto` (the default, and what both profiles use), Whisper runs on the GPU when CTranslate2 finds one. It uses the smallest fast compute type the card supports (`int8` on Pascal cards such as the MX150, `int8_float16` on newer ones). The app loads the pip CUDA libraries itself, so `LD_LIBRARY_PATH` is not needed. If the GPU fails (out of memory, missing libraries), transcription falls back to the CPU and says so. large-v3-turbo peaks at about 1.3 GB of VRAM in `int8`.
+
+Ollama needs no settings: it puts as many layers on the GPU as fit and runs the rest on the CPU. On a 2 GB MX150 with an 8B model, its own choice (2 of 33 layers) was as fast as forcing 6, and 10 or more ran out of VRAM. Whisper finishes and frees the GPU before Ollama starts.
 
 ### Review dashboard (approve or reject from your phone)
 
