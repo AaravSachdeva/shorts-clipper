@@ -119,6 +119,8 @@ python main.py "https://www.youtube.com/watch?v=VIDEO_ID"
 python main.py "https://www.youtube.com/watch?v=VIDEO_ID" --mode local
 ```
 
+Give it the YouTube link and local mode downloads the video itself with `yt-dlp`. YouTube downloads need Node.js or Deno on the `PATH`: `yt-dlp[default]` from `requirements-local.txt` installs the challenge solver that runs on them.
+
 Local mode writes the rendered shorts to `./output/<video name>/short_01.mp4`, `short_02.mp4`, … (override `output` with `LOCAL_OUTPUT_DIR`). The folder is named after the YouTube title, or after the file name for a local file, so each long video keeps its own shorts. A different video with the same title gets `<title> (2)`, tracked by a `.source` file inside each folder. Each clip is 1080×1920 H.264. It comes with burned-in word-highlight captions, an on-screen hook for the first 3 s, and audio normalized to −14 LUFS. Next to each clip, `short_01.txt` holds a ready-to-paste title, caption and hashtags, and `short_01.json` holds the full metadata.
 
 ### Fully offline with Ollama (no API keys)

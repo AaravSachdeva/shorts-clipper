@@ -158,6 +158,7 @@ def download_youtube_local(video_url: str, fmt: str = "720", out_dir: Optional[s
         "outtmpl": os.path.join(out_dir, "source_%(id)s.%(ext)s"),
         "merge_output_format": "mp4",
         "writeinfojson": True,  # source_<id>.info.json carries the title video_title() reads
+        "js_runtimes": {"deno": {}, "node": {}},  # yt-dlp enables only deno by default; node is what most machines have
         "quiet": True,
         "no_warnings": True,
         "noprogress": True,

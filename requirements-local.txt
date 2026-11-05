@@ -1,7 +1,8 @@
 -r requirements.txt
 
 # Optional dependencies for --mode local.
-yt-dlp>=2024.1.1
+# [default] pulls yt-dlp-ejs, the solver for YouTube JS challenges (needs node or deno)
+yt-dlp[default]>=2026.10.26
 faster-whisper>=1.0.0
 # PyAV 17+ breaks faster-whisper 1.2.x (open() got unexpected kwarg 'metadata_errors')
 av>=12,<17

@@ -47,3 +47,35 @@ def test_group_dir_never_adopts_unmarked_folder(tmp_path):
     out = tmp_path / "out"
     (out / "My Talk").mkdir(parents=True)  # made by hand or by an older run
     assert group_dir(str(out), _info(tmp_path, "My Talk")) == str(out / "My Talk (2)")
+
+
+def test_download_enables_node_runtime(tmp_path, monkeypatch):
+    import types
+
+    from shorts_generator.local import downloader
+
+    seen = {}
+
+    class FakeYDL:
+        def __init__(self, opts):
+            seen.update(opts)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def extract_info(self, url, download):
+            return {"id": "abc", "ext": "mp4"}
+
+        def prepare_filename(self, info):
+            path = tmp_path / "source_abc.mp4"
+            path.write_bytes(b"")
+            return str(path)
+
+    monkeypatch.setattr(downloader, "_import_ytdlp", lambda: types.SimpleNamespace(YoutubeDL=FakeYDL))
+    downloader.download_youtube_local("https://www.youtube.com/watch?v=abc", out_dir=str(tmp_path / "out"))
+    assert seen["js_runtimes"] == {"deno": {}, "node": {}}
+    assert seen["writeinfojson"] is True  # existing options kept
+    assert "remote_components" not in seen
