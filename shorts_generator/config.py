@@ -28,6 +28,8 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b").strip()
 # Ollama's built-in context window is small (a few thousand tokens) and it
 # silently truncates longer prompts, so we always send num_ctx explicitly.
 OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "16384"))
+# Layers on the GPU. Unset = Ollama decides; its auto-fit keeps a big VRAM margin on small cards.
+OLLAMA_NUM_GPU = int(os.environ["OLLAMA_NUM_GPU"]) if os.getenv("OLLAMA_NUM_GPU", "").strip() else None
 # CPU inference on a 14B model can take many minutes per chunk.
 OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT", "3600"))
 OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "10m").strip()

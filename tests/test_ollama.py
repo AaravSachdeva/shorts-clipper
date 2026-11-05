@@ -88,3 +88,18 @@ def test_http_error_surfaces(monkeypatch):
     monkeypatch.setattr(requests, "post", lambda url, json=None, timeout=None: _Resp(status=500, text="boom"))
     with pytest.raises(RuntimeError, match="HTTP 500"):
         llm.call_local_llm("hi")
+
+
+@pytest.mark.parametrize("num_gpu", [None, 3])
+def test_num_gpu_sent_only_when_set(monkeypatch, num_gpu):
+    monkeypatch.setattr(llm.config, "OLLAMA_NUM_GPU", num_gpu)
+    monkeypatch.setattr(requests, "get", lambda url, timeout: _tags("qwen3:8b"))
+    sent = {}
+
+    def post(url, json=None, timeout=None):
+        sent.update(json["options"])
+        return _Resp(data={"message": {"content": "{}"}, "prompt_eval_count": 10, "eval_count": 1})
+
+    monkeypatch.setattr(requests, "post", post)
+    llm.call_local_llm("hi")
+    assert sent.get("num_gpu") == num_gpu

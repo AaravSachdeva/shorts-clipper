@@ -201,7 +201,7 @@ pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"   # CUDA 12 libraries fo
 
 With `LOCAL_WHISPER_DEVICE=auto` (the default, and what both profiles use), Whisper runs on the GPU when CTranslate2 finds one. It uses the smallest fast compute type the card supports (`int8` on Pascal cards such as the MX150, `int8_float16` on newer ones). The app loads the pip CUDA libraries itself, so `LD_LIBRARY_PATH` is not needed. If the GPU fails (out of memory, missing libraries), transcription falls back to the CPU and says so. large-v3-turbo peaks at about 1.3 GB of VRAM in `int8`.
 
-Ollama needs no settings: it puts as many layers on the GPU as fit and runs the rest on the CPU. On a 2 GB MX150 with an 8B model, its own choice (2 of 33 layers) was as fast as forcing 6, and 10 or more ran out of VRAM. Whisper finishes and frees the GPU before Ollama starts.
+Ollama splits layers between the GPU and the CPU itself, but its auto-fit keeps about 1.2 GB of VRAM free, which on a 2 GB card can mean no layers at all. `OLLAMA_NUM_GPU` sets the layer count yourself; too many fails the load with `cudaMalloc failed: out of memory`, so measure. Measured on a 2 GB MX150: gemma4:12b at `OLLAMA_NUM_CTX=65536` got 0 of 49 layers on auto; `OLLAMA_NUM_GPU=2` generated about 10% faster (2.33 vs 2.12 tok/s), and 3 or more ran out of VRAM. With llama3.1:8b at 16k context, auto (2 of 33) was as fast as forcing 6. Whisper finishes and frees the GPU before Ollama starts.
 
 ### Review dashboard (approve or reject from your phone)
 

@@ -140,6 +140,8 @@ def call_ollama_llm(prompt: str, schema: Optional[Dict] = None) -> str:
         "options": {"temperature": 0.2, "num_ctx": num_ctx},
         "keep_alive": config.OLLAMA_KEEP_ALIVE,
     }
+    if config.OLLAMA_NUM_GPU is not None:
+        body["options"]["num_gpu"] = config.OLLAMA_NUM_GPU
     try:
         r = requests.post(
             f"{config.OLLAMA_HOST}/api/chat", json=body, timeout=config.OLLAMA_TIMEOUT_SECONDS
