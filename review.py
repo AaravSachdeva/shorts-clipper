@@ -17,6 +17,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -29,6 +30,7 @@ SIDECARS = (".mp4", ".json", ".txt")
 _NAME = re.compile(r"short_\d+(-\d+)?")
 _VIDEO_ID = re.compile(r"[A-Za-z0-9_-]{11}")
 LOG = ".generate.log"
+_JOB_LOCK = threading.Lock()  # requests run on threads; two taps must not start two pipelines
 
 
 def _folder(group_dir: Path, status: str) -> Path:
@@ -119,12 +121,13 @@ def youtube_url(text: str) -> Optional[str]:
 def start_job(srv, url: str) -> bool:
     """Start the pipeline on `url` in the background; False if one is already running."""
     # shortcut: job state lives in memory, a dashboard restart forgets it (the pipeline keeps running); persist it if that bites
-    if srv.job and srv.job["proc"].poll() is None:
-        return False
-    with open(srv.root / LOG, "w", encoding="utf-8") as log:
-        proc = subprocess.Popen([*srv.cmd, "--", url], stdout=log, stderr=subprocess.STDOUT)
-    srv.job = {"url": url, "proc": proc, "started": time.time()}
-    return True
+    with _JOB_LOCK:
+        if srv.job and srv.job["proc"].poll() is None:
+            return False
+        with open(srv.root / LOG, "w", encoding="utf-8") as log:
+            proc = subprocess.Popen([*srv.cmd, "--", url], stdout=log, stderr=subprocess.STDOUT)
+        srv.job = {"url": url, "proc": proc, "started": time.time()}
+        return True
 
 
 def _job_html(job: Optional[Dict], root: Path) -> str:

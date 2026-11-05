@@ -193,6 +193,7 @@ def test_post_move_back_from_approved_tab(root, server):
 # --- make shorts from a YouTube link ------------------------------------------
 
 import sys
+import time
 
 from review import youtube_url
 
@@ -254,3 +255,23 @@ def test_failed_job_shows_log_tail(server):
 def test_page_has_link_form(server):
     _, _, body = _req(server, "GET", "/", COOKIE)
     assert b'action="/generate"' in body and b'name="url"' in body
+
+
+def test_start_job_once_under_concurrent_taps(server, monkeypatch):
+    import review
+
+    class SlowProc:
+        def __init__(self, *a, **k):
+            time.sleep(0.2)  # widen the gap between the running check and srv.job being set
+
+        def poll(self):
+            return None
+
+    monkeypatch.setattr(review.subprocess, "Popen", SlowProc)
+    results = []
+    threads = [threading.Thread(target=lambda: results.append(review.start_job(server, ZOO))) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sorted(results) == [False, True]
