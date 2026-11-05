@@ -207,6 +207,8 @@ exists, the app skips `yt-dlp` and reuses the cached video.
    ```
 3. On your phone, connected to the same Wi-Fi, open `http://<this machine's LAN IP>:8765/?token=<REVIEW_TOKEN>` once. The page saves a cookie and then drops the token from the address bar. Bookmark `http://<LAN IP>:8765/`.
 
+To make shorts from a new video, paste its YouTube link into the box at the top of the page and tap **Make shorts**. The server runs `main.py` on it in the background, one video at a time, and the page shows whether it is running, done or failed (with the last lines of `output/.generate.log`). The new shorts then appear under Pending. Only YouTube video links are accepted. Pass pipeline flags with `--pipeline-args`, e.g. `python review.py --pipeline-args "--mode local --profile cpu-slow"` (default `--mode local`).
+
 Approve and Reject only move files, and nothing is ever deleted. A short's files (`.mp4`, `.json`, `.txt`) move into `approved/` or `rejected/` inside the video's folder:
 
 ```

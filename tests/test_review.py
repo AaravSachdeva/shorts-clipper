@@ -188,3 +188,69 @@ def test_post_move_back_from_approved_tab(root, server):
     hdrs = {**COOKIE, "Content-Type": "application/x-www-form-urlencoded"}
     assert _req(server, "POST", "/move", hdrs, urlencode(form))[0] == 303
     assert not (root / "Video A" / "approved" / "short_01.mp4").exists()
+
+
+# --- make shorts from a YouTube link ------------------------------------------
+
+import sys
+
+from review import youtube_url
+
+ZOO = "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+FORM = {**COOKIE, "Content-Type": "application/x-www-form-urlencoded"}
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("https://www.youtube.com/watch?v=jNQXAC9IVRw&list=x", ZOO),
+    ("https://youtu.be/jNQXAC9IVRw", ZOO),
+    ("https://www.youtube.com/shorts/jNQXAC9IVRw", ZOO),
+    ("  https://m.youtube.com/watch?v=jNQXAC9IVRw  ", ZOO),
+    ("/etc/passwd", None),
+    ("file:///etc/passwd", None),
+    ("--help", None),
+    ("https://vimeo.com/123", None),
+    ("https://youtu.be/short", None),
+    ("https://www.youtube.com/watch?v=jNQXAC9IVRw;rm", None),
+    ("", None),
+])
+def test_youtube_url(text, expected):
+    assert youtube_url(text) == expected
+
+
+def _generate(server, url):
+    return _req(server, "POST", "/generate", FORM, urlencode({"url": url}))
+
+
+def test_generate_starts_one_job(root, server):
+    server.cmd = [sys.executable, "-c", "import sys,time;print(sys.argv[1:]);time.sleep(2)"]
+    status, resp, _ = _generate(server, "https://youtu.be/jNQXAC9IVRw")
+    assert status == 303 and resp.getheader("Location") == "/"
+    assert _generate(server, ZOO)[0] == 409
+    _, _, body = _req(server, "GET", "/", COOKIE)
+    assert b"Making shorts from" in body and ZOO.encode() in body
+    server.job["proc"].wait()
+    assert f"'--', '{ZOO}'" in (root / ".generate.log").read_text()
+    _, _, body = _req(server, "GET", "/", COOKIE)
+    assert b"Done:" in body
+    assert b"Video A" in body  # the log file is not listed as a video
+
+
+def test_generate_rejects_bad_link_and_needs_cookie(server):
+    assert _generate(server, "/etc/passwd")[0] == 400
+    assert server.job is None
+    no_cookie = {"Content-Type": FORM["Content-Type"]}
+    assert _req(server, "POST", "/generate", no_cookie, urlencode({"url": ZOO}))[0] == 401
+    assert server.job is None
+
+
+def test_failed_job_shows_log_tail(server):
+    server.cmd = [sys.executable, "-c", "print('<boom>');raise SystemExit(3)"]
+    assert _generate(server, ZOO)[0] == 303
+    server.job["proc"].wait()
+    _, _, body = _req(server, "GET", "/", COOKIE)
+    assert b"Failed:" in body and b"&lt;boom&gt;" in body and b"<boom>" not in body
+
+
+def test_page_has_link_form(server):
+    _, _, body = _req(server, "GET", "/", COOKIE)
+    assert b'action="/generate"' in body and b'name="url"' in body

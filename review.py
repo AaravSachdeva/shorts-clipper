@@ -13,8 +13,11 @@ import html
 import json
 import os
 import re
+import shlex
 import shutil
+import subprocess
 import sys
+import time
 from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -24,6 +27,8 @@ from urllib.parse import parse_qs, quote, unquote, urlsplit
 STATUSES = ("pending", "approved", "rejected")
 SIDECARS = (".mp4", ".json", ".txt")
 _NAME = re.compile(r"short_\d+(-\d+)?")
+_VIDEO_ID = re.compile(r"[A-Za-z0-9_-]{11}")
+LOG = ".generate.log"
 
 
 def _folder(group_dir: Path, status: str) -> Path:
@@ -96,6 +101,48 @@ def parse_range(header: str, size: int) -> Optional[Tuple[int, int]]:
     return (start, end) if start <= end and start < size else None
 
 
+def youtube_url(text: str) -> Optional[str]:
+    """Canonical watch URL for a YouTube video link, or None for anything else.
+
+    The dashboard passes this to the pipeline, which also accepts local paths,
+    so only a rebuilt https://www.youtube.com/watch?v=<id> ever gets through.
+    """
+    from shorts_generator.local.downloader import _extract_youtube_video_id
+
+    text = (text or "").strip()
+    if urlsplit(text).scheme not in ("http", "https"):
+        return None
+    video_id = _extract_youtube_video_id(text) or ""
+    return f"https://www.youtube.com/watch?v={video_id}" if _VIDEO_ID.fullmatch(video_id) else None
+
+
+def start_job(srv, url: str) -> bool:
+    """Start the pipeline on `url` in the background; False if one is already running."""
+    # shortcut: job state lives in memory, a dashboard restart forgets it (the pipeline keeps running); persist it if that bites
+    if srv.job and srv.job["proc"].poll() is None:
+        return False
+    with open(srv.root / LOG, "w", encoding="utf-8") as log:
+        proc = subprocess.Popen([*srv.cmd, "--", url], stdout=log, stderr=subprocess.STDOUT)
+    srv.job = {"url": url, "proc": proc, "started": time.time()}
+    return True
+
+
+def _job_html(job: Optional[Dict], root: Path) -> str:
+    if not job:
+        return ""
+    e, url, rc = html.escape, job["url"], job["proc"].poll()
+    if rc is None:
+        started = time.strftime("%H:%M", time.localtime(job["started"]))
+        return f'<p class="job">Making shorts from {e(url)}, started {started}. Refresh to check.</p>'
+    if rc == 0:
+        return f'<p class="job">Done: {e(url)}. New shorts are under Pending.</p>'
+    try:
+        tail = "\n".join((Path(root) / LOG).read_text(encoding="utf-8", errors="replace").splitlines()[-5:])
+    except OSError:
+        tail = ""
+    return f'<p class="job fail">Failed: {e(url)}</p><pre>{e(tail)}</pre>'
+
+
 # --- HTTP server -------------------------------------------------------------
 
 CSS = """
@@ -121,10 +168,14 @@ button,.dl{flex:1;min-height:44px;font:inherit;font-weight:600;border-radius:10p
 .approve{background:var(--ok);border-color:var(--ok);color:#fff}
 .reject{color:var(--no);border-color:var(--no)}
 .empty{color:var(--muted)}
+input{flex:2;min-width:0;min-height:44px;font:inherit;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg)}
+.job{color:var(--muted)}
+.fail{color:var(--no)}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem;color:var(--muted)}
 """
 
 
-def _page(groups: List[Dict], status: str) -> str:
+def _page(groups: List[Dict], status: str, job_html: str = "") -> str:
     e = html.escape
     counts = {s: sum(sh["status"] == s for g in groups for sh in g["shorts"]) for s in STATUSES}
     tabs = "".join(
@@ -167,7 +218,10 @@ def _page(groups: List[Dict], status: str) -> str:
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f"<title>Shorts Review</title><style>{CSS}</style></head>"
-        f'<body><main><h1>Shorts Review</h1><nav aria-label="Status">{tabs}</nav>{"".join(body)}</main></body></html>'
+        f'<body><main><h1>Shorts Review</h1>'
+        '<form method="post" action="/generate"><input type="url" name="url" required placeholder="YouTube link" aria-label="YouTube link">'
+        '<button>Make shorts</button></form>'
+        f'{job_html}<nav aria-label="Status">{tabs}</nav>{"".join(body)}</main></body></html>'
     )
 
 
@@ -208,7 +262,7 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/":
             status = query.get("status", ["pending"])[0]
             status = status if status in STATUSES else "pending"
-            page = _page(list_groups(self.server.root), status).encode()
+            page = _page(list_groups(self.server.root), status, _job_html(self.server.job, self.server.root)).encode()
             return self._send(200, page, "text/html; charset=utf-8", {"Cache-Control": "no-store"})
         if url.path.startswith("/media/"):
             return self._media(unquote(url.path[len("/media/"):]))
@@ -252,12 +306,20 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self._authed():
             return self._deny()
-        if urlsplit(self.path).path != "/move":
+        path = urlsplit(self.path).path
+        if path not in ("/move", "/generate"):
             return self._send(404, b"Not found\n")
         length = int(self.headers.get("Content-Length") or 0)
         if not 0 < length <= 4096:
             return self._send(400, b"Bad form\n")
         form = {k: v[0] for k, v in parse_qs(self.rfile.read(length).decode("utf-8", "replace")).items()}
+        if path == "/generate":
+            url = youtube_url(form.get("url", ""))
+            if not url:
+                return self._send(400, b"Not a YouTube video link\n")
+            if not start_job(self.server, url):
+                return self._send(409, b"Already making shorts; wait for it to finish\n")
+            return self._send(303, headers={"Location": "/"})
         back = form.get("status") if form.get("status") in STATUSES else "pending"
         try:
             move_short(self.server.root, form.get("group", ""), form.get("name", ""), form.get("to", ""), frm=back)
@@ -268,9 +330,11 @@ class Handler(BaseHTTPRequestHandler):
         self._send(303, headers={"Location": f"/?status={back}"})
 
 
-def make_server(root: Path, token: str, host: str, port: int) -> ThreadingHTTPServer:
+def make_server(root: Path, token: str, host: str, port: int, pipeline_args=("--mode", "local")) -> ThreadingHTTPServer:
     srv = ThreadingHTTPServer((host, port), Handler)
     srv.root, srv.token = Path(root), token
+    srv.cmd = [sys.executable, str(Path(__file__).with_name("main.py")), *pipeline_args]
+    srv.job = None
     return srv
 
 
@@ -278,6 +342,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Review dashboard for rendered shorts")
     parser.add_argument("--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0, the whole LAN)")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--pipeline-args", default="--mode local",
+                        help='main.py flags for links pasted on the page (default: "--mode local")')
     args = parser.parse_args()
 
     from shorts_generator.config import LOCAL_OUTPUT_DIR  # also loads .env
@@ -289,7 +355,7 @@ def main() -> int:
         return 1
     root = Path(LOCAL_OUTPUT_DIR)
     root.mkdir(parents=True, exist_ok=True)
-    srv = make_server(root, token, args.host, args.port)
+    srv = make_server(root, token, args.host, args.port, shlex.split(args.pipeline_args))
     print(f"Reviewing {root.resolve()}\nOn your phone open: http://<this machine's LAN IP>:{args.port}/?token=<REVIEW_TOKEN>", flush=True)
     try:
         srv.serve_forever()
