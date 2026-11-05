@@ -7,7 +7,6 @@ Two modes:
                               Self-hosted; LLM_PROVIDER selects openai, gemini,
                               or ollama (fully offline).
 """
-import os
 import time
 from typing import Dict, List, Optional
 
@@ -26,7 +25,7 @@ def _run_local(
 ) -> Dict:
     from .local.clipper import crop_highlights_local
     from .config import LOCAL_OUTPUT_DIR
-    from .local.downloader import download_youtube_local, video_title
+    from .local.downloader import download_youtube_local, group_dir
     from .local.llm import call_local_llm, release_local_llm
     from .local.transcriber import transcribe_local
     from .metadata import generate_metadata, write_sidecars
@@ -58,7 +57,7 @@ def _run_local(
 
     print(f"[pipeline/local] rendering {len(top)} of {len(all_highlights)} candidates", flush=True)
     t = time.time()
-    out_dir = os.path.join(LOCAL_OUTPUT_DIR, video_title(source_path))  # one folder per long video
+    out_dir = group_dir(LOCAL_OUTPUT_DIR, source_path)  # one folder per long video
     shorts = crop_highlights_local(source_path, top, aspect_ratio=aspect_ratio, out_dir=out_dir, transcript=transcript)
     write_sidecars(shorts)
     timings["render"] = time.time() - t

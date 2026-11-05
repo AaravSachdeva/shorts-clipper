@@ -105,6 +105,35 @@ def video_title(source_path: str) -> str:
     return title or "untitled"
 
 
+def group_dir(root: str, source_path: str) -> str:
+    """Create or reuse the output folder for one source video.
+
+    Folders are named after the video title. A `.source` marker records which
+    file a folder belongs to, so a different video with the same title gets
+    "<title> (2)" instead of overwriting the first one's shorts.
+    """
+    src = os.path.abspath(source_path)
+    title = video_title(source_path)
+    n = 1
+    while True:
+        path = os.path.join(root, title if n == 1 else f"{title} ({n})")
+        marker = os.path.join(path, ".source")
+        try:
+            os.makedirs(path)
+        except FileExistsError:
+            try:
+                with open(marker, encoding="utf-8") as f:
+                    if f.read().strip() == src:
+                        return path
+            except OSError:
+                pass  # no marker: not ours, never adopt it
+            n += 1
+            continue
+        with open(marker, "w", encoding="utf-8") as f:
+            f.write(src + "\n")
+        return path
+
+
 def download_youtube_local(video_url: str, fmt: str = "720", out_dir: Optional[str] = None) -> str:
     """Download a remote URL or return a local file path unchanged."""
     local_path = _resolve_local_path(video_url)
