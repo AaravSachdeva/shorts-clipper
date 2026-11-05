@@ -76,3 +76,30 @@ def test_preloads_pip_cuda_libs_in_dependency_order(tmp_path, monkeypatch):
 def test_preload_is_a_no_op_without_the_wheels(monkeypatch):
     monkeypatch.setitem(sys.modules, "nvidia", None)  # import raises ImportError
     tr._preload_pip_cuda_libs()
+
+
+def test_whisper_model_is_freed_after_transcription(tmp_path, monkeypatch):
+    """The GPU copy of Whisper must be gone before Ollama loads, or Ollama gets less VRAM."""
+    import gc
+    import weakref
+
+    monkeypatch.setattr(tr, "LOCAL_OUTPUT_DIR", str(tmp_path / "out"))
+    monkeypatch.setattr(tr, "LOCAL_WHISPER_DEVICE", "cuda")
+    monkeypatch.setattr(tr, "_preload_pip_cuda_libs", lambda: None)
+    _fake_ct2(monkeypatch)
+    media = tmp_path / "ep.mp4"
+    media.write_bytes(b"")
+    alive = []
+
+    class Model:
+        def __init__(self, name, device, compute_type):
+            alive.append(weakref.ref(self))
+
+        def transcribe(self, **kw):
+            seg = types.SimpleNamespace(start=0.0, end=1.0, text="hi", words=[])
+            return iter([seg]), types.SimpleNamespace(duration=1.0)
+
+    monkeypatch.setitem(sys.modules, "faster_whisper", types.SimpleNamespace(WhisperModel=Model))
+    tr.transcribe_local(str(media))
+    gc.collect()
+    assert alive and all(r() is None for r in alive)
