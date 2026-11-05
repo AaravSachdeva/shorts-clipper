@@ -52,17 +52,22 @@ def list_groups(root: Path) -> List[Dict]:
     return sorted(groups, key=lambda g: g["mtime"], reverse=True)
 
 
-def move_short(root: Path, group: str, name: str, to: str) -> Path:
-    """Move a short's mp4 and sidecars into the folder for status `to`; never overwrites."""
+def move_short(root: Path, group: str, name: str, to: str, frm: Optional[str] = None) -> Path:
+    """Move a short's mp4 and sidecars into the folder for status `to`; never overwrites.
+
+    `frm` names the status it is moving from; a re-run video can leave the same
+    name in two status folders, so the caller's view decides which one moves.
+    """
     root = Path(root)
     if group in ("", ".", "..") or "/" in group or "\\" in group or not (root / group).is_dir():
         raise ValueError(f"bad group: {group!r}")
     if not _NAME.fullmatch(name):
         raise ValueError(f"bad short name: {name!r}")
-    if to not in STATUSES:
-        raise ValueError(f"bad status: {to!r}")
+    if to not in STATUSES or (frm is not None and frm not in STATUSES):
+        raise ValueError(f"bad status: {to!r} / {frm!r}")
     group_dir = root / group
-    src_dir = next((_folder(group_dir, s) for s in STATUSES if (_folder(group_dir, s) / f"{name}.mp4").is_file()), None)
+    candidates = (frm,) if frm else STATUSES
+    src_dir = next((_folder(group_dir, s) for s in candidates if (_folder(group_dir, s) / f"{name}.mp4").is_file()), None)
     if src_dir is None:
         raise FileNotFoundError(f"{group}/{name}")
     dest_dir = _folder(group_dir, to)
@@ -255,7 +260,7 @@ class Handler(BaseHTTPRequestHandler):
         form = {k: v[0] for k, v in parse_qs(self.rfile.read(length).decode("utf-8", "replace")).items()}
         back = form.get("status") if form.get("status") in STATUSES else "pending"
         try:
-            move_short(self.server.root, form.get("group", ""), form.get("name", ""), form.get("to", ""))
+            move_short(self.server.root, form.get("group", ""), form.get("name", ""), form.get("to", ""), frm=back)
         except ValueError as err:
             return self._send(400, f"{err}\n".encode())
         except FileNotFoundError:

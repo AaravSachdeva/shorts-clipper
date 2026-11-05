@@ -170,3 +170,21 @@ def test_post_move(root, server):
     assert _req(server, "POST", "/move", hdrs, urlencode({**form, "to": "deleted"}))[0] == 400
     assert _req(server, "POST", "/move", hdrs, urlencode({**form, "name": "short_09"}))[0] == 404
     assert _req(server, "POST", "/move", {"Content-Type": hdrs["Content-Type"]}, urlencode(form))[0] == 401
+
+
+def test_move_uses_source_status_when_name_exists_twice(root):
+    _short(root / "Video A" / "approved", "short_01")  # re-run left a pending and an approved short_01
+    new = move_short(root, "Video A", "short_01", "pending", frm="approved")
+    assert new == root / "Video A" / "short_01-2.mp4"
+    assert not (root / "Video A" / "approved" / "short_01.mp4").exists()
+    assert (root / "Video A" / "short_01.mp4").exists()
+    with pytest.raises(ValueError):
+        move_short(root, "Video A", "short_01", "pending", frm="bogus")
+
+
+def test_post_move_back_from_approved_tab(root, server):
+    _short(root / "Video A" / "approved", "short_01")
+    form = {"group": "Video A", "name": "short_01", "to": "pending", "status": "approved"}
+    hdrs = {**COOKIE, "Content-Type": "application/x-www-form-urlencoded"}
+    assert _req(server, "POST", "/move", hdrs, urlencode(form))[0] == 303
+    assert not (root / "Video A" / "approved" / "short_01.mp4").exists()
