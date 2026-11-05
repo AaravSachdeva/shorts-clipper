@@ -33,9 +33,9 @@ OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT", "3600"))
 OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "10m").strip()
 
 # Highlight selection.
-# Smaller local models do better on shorter chunks, so Ollama defaults to 10 min.
+# Transcript window per highlight call. Small local models do better on ~5 min windows.
 HIGHLIGHT_CHUNK_SECONDS = int(
-    os.getenv("HIGHLIGHT_CHUNK_SECONDS", "600" if LLM_PROVIDER == "ollama" else "1200")
+    os.getenv("HIGHLIGHT_CHUNK_SECONDS", "300" if LLM_PROVIDER == "ollama" else "1200")
 )
 # short ≈ 15-35s, medium ≈ 20-60s (default), long ≈ 45-90s
 TARGET_LENGTH = os.getenv("TARGET_LENGTH", "medium").strip().lower()

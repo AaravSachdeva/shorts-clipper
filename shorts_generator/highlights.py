@@ -2,8 +2,9 @@
 
 Pipeline:
   1. classify content type / density from samples across the whole video
-  2. ask the LLM for highlights (long videos are chunked with overlap; chunk
-     prompts use chunk-relative timestamps)
+  2. ask the LLM for highlights one overlapping window at a time (chunk-relative
+     timestamps); it scores each clip on a fixed hook / standalone / payoff
+     rubric and the overall score is computed here, not by the model
   3. snap each clip to sentence boundaries using word timestamps
   4. drop overlapping candidates (score-based)
   5. re-rank the top candidates in one comparative call, so scores from
@@ -48,19 +49,20 @@ HIGHLIGHT_SCHEMA = {
             "items": {
                 "type": "object",
                 "properties": {
+                    # Order matters for structured output: quote and reason before scoring.
                     "title": {"type": "string"},
                     "start_time": {"type": "number"},
                     "end_time": {"type": "number"},
-                    "score": {"type": "integer"},
-                    "hook_score": {"type": "integer"},
-                    "shareability_score": {"type": "integer"},
                     "hook_sentence": {"type": "string"},
-                    "on_screen_hook": {"type": "string"},
                     "virality_reason": {"type": "string"},
+                    "hook": {"type": "integer"},
+                    "standalone": {"type": "integer"},
+                    "payoff": {"type": "integer"},
+                    "on_screen_hook": {"type": "string"},
                 },
                 "required": [
-                    "title", "start_time", "end_time", "score", "hook_score",
-                    "shareability_score", "hook_sentence", "on_screen_hook", "virality_reason",
+                    "title", "start_time", "end_time", "hook_sentence", "virality_reason",
+                    "hook", "standalone", "payoff", "on_screen_hook",
                 ],
             },
         }
@@ -118,6 +120,15 @@ What YouTube Shorts and Instagram Reels reward (judge every clip against this):
 """
 
 
+RUBRIC = """Score every clip 0-10 on this fixed rubric. 5 is an ordinary clip; use the whole range:
+- hook: does the first sentence alone stop the scroll? 0 = greeting, filler or setup; 5 = mildly interesting; 10 = instant curiosity or surprise
+- standalone: does it make sense to someone who never saw this video? 0 = needs earlier context; 5 = small gaps; 10 = fully self-contained
+- payoff: does it end on a punchline, conclusion or reaction? 0 = trails off or cuts mid-thought; 5 = soft ending; 10 = strong landing"""
+
+# Weights for the overall 0-100 score. The hook weighs most: the first seconds decide the swipe.
+RUBRIC_WEIGHTS = {"hook": 0.4, "standalone": 0.3, "payoff": 0.3}
+
+
 HIGHLIGHT_SYSTEM_PROMPT = """You are an elite short-form video editor who has studied thousands of viral clips on TikTok, Instagram Reels, and YouTube Shorts. You know exactly what makes viewers stop scrolling, watch to the end, and share.
 
 {virality_criteria}
@@ -132,23 +143,22 @@ Rules:
 - end_time lands right after a payoff (punchline, conclusion, reaction); never cut mid-sentence or mid-thought
 - NEVER select ads, sponsor reads, trailers for other shows, appeals to support the show (Patreon, merch, "like and subscribe"), intros, or outros
 - Clips must not overlap significantly with each other
-- score: 0-100 overall viral potential (not general quality). hook_score: 0-100 strength of the first sentence on its own. shareability_score: 0-100 how likely a viewer sends it to someone
 - hook_sentence: the clip's opening line, quoted from the transcript
 - on_screen_hook: 3-8 words of overlay text for the first seconds that creates curiosity without spoiling the payoff (no hashtags, no emojis)
 - virality_reason: one sentence on why this clip will perform
+{rubric}
 - {num_clips_instruction}. If this part of the video is only ads, plugs, or an outro, return {{"highlights": []}}
 {examples}
 Respond ONLY with valid JSON (no markdown, no explanation):
-{{"highlights":[{{"title":"string","start_time":float,"end_time":float,"score":int,"hook_score":int,"shareability_score":int,"hook_sentence":"string","on_screen_hook":"string","virality_reason":"string"}}]}}"""
+{{"highlights":[{{"title":"string","start_time":float,"end_time":float,"hook_sentence":"string","virality_reason":"string","hook":int,"standalone":int,"payoff":int,"on_screen_hook":"string"}}]}}"""
 
 
 RERANK_PROMPT = """You are a short-form video editor choosing which clips to post as YouTube Shorts and Instagram Reels.
 Below are {n} candidate clips cut from the same {content_type}. They were scored separately, so their scores are not comparable.
 Compare them against each other and give each a final score from 0 to 100 based on:
-- the strength of the first sentence (does it stop the scroll?)
-- completion: tight, no dead air, makes sense without context
-- the payoff at the end
-- whether people would share it
+- hook: does the first sentence stop the scroll?
+- standalone: tight, no dead air, makes sense without context
+- payoff: does it end on a strong landing?
 Use the full range: the best clip should score clearly higher than an average one.
 
 {candidates}
@@ -163,11 +173,11 @@ TARGET_LENGTHS = {
     "long": (45, 90, 150),
 }
 
-LONG_VIDEO_THRESHOLD = 1800     # chunk videos longer than 30 min
 CHUNK_OVERLAP_SECONDS = 60
 GPT_CALL_TIMEOUT_SECONDS = 300  # cap MuAPI polls at 5 min — a wedged call should fail fast
 MAX_HIGHLIGHT_API_ATTEMPTS = 3
 RERANK_TOP_N = 12
+MIN_CLIP_SECONDS = 12  # matches the prompt's "never shorter than 12 seconds"
 
 
 def chunk_size_seconds() -> int:
@@ -244,6 +254,13 @@ def _clamp_score(value: object) -> int:
     return max(0, min(100, _coerce_int(value, default=0)))
 
 
+def _rubric_score(item: Dict) -> Optional[Dict]:
+    """The clamped 0-10 rubric, or None if the model left any part of it out."""
+    if not all(isinstance(item.get(k), (int, float, str)) and str(item.get(k)).strip() for k in RUBRIC_WEIGHTS):
+        return None
+    return {k: max(0, min(10, _coerce_int(item.get(k)))) for k in RUBRIC_WEIGHTS}
+
+
 def _sanitize_highlights(raw_highlights: object, duration: float) -> List[Dict]:
     """Normalize model output into the expected shape; skip invalid entries."""
     if not isinstance(raw_highlights, list):
@@ -266,19 +283,21 @@ def _sanitize_highlights(raw_highlights: object, duration: float) -> List[Dict]:
             if end <= start:
                 continue
 
-        cleaned.append(
-            {
-                "title": str(item.get("title") or "Untitled Highlight").strip(),
-                "start_time": start,
-                "end_time": end,
-                "score": _clamp_score(item.get("score")),
-                "hook_score": _clamp_score(item.get("hook_score")),
-                "shareability_score": _clamp_score(item.get("shareability_score")),
-                "hook_sentence": str(item.get("hook_sentence") or "").strip(),
-                "on_screen_hook": str(item.get("on_screen_hook") or "").strip(),
-                "virality_reason": str(item.get("virality_reason") or "").strip(),
-            }
-        )
+        rubric = _rubric_score(item)
+        clip = {
+            "title": str(item.get("title") or "Untitled Highlight").strip(),
+            "start_time": start,
+            "end_time": end,
+            # Small models give noisy holistic scores; a weighted fixed rubric is steadier.
+            "score": round(sum(rubric[k] * w * 10 for k, w in RUBRIC_WEIGHTS.items())) if rubric
+                     else _clamp_score(item.get("score")),
+            "hook_sentence": str(item.get("hook_sentence") or "").strip(),
+            "on_screen_hook": str(item.get("on_screen_hook") or "").strip(),
+            "virality_reason": str(item.get("virality_reason") or "").strip(),
+        }
+        if rubric:
+            clip["rubric"] = rubric
+        cleaned.append(clip)
 
     return cleaned
 
@@ -401,6 +420,7 @@ def call_highlight_api(
         max_len=hi,
         hard_max=hard_max,
         num_clips_instruction=f"Generate at least {min_clips} highlights",
+        rubric=RUBRIC,
         examples=_examples_block(examples or []),
     )
     base_prompt = f"{system}\n\nTranscript:\n{transcript_text}"
@@ -432,8 +452,8 @@ def call_highlight_api(
             prompt = (
                 base_prompt
                 + "\n\nIMPORTANT: Return ONLY valid JSON with a top-level 'highlights' array."
-                + " Each item must include: title, start_time, end_time, score, hook_score,"
-                + " shareability_score, hook_sentence, on_screen_hook, virality_reason."
+                + " Each item must include: title, start_time, end_time, hook_sentence,"
+                + " virality_reason, hook, standalone, payoff (0-10 each), on_screen_hook."
                 + " Times are in seconds as shown in the transcript. No markdown fences, no commentary."
             )
 
@@ -558,9 +578,10 @@ def get_highlights(
 
     kwargs = dict(num_clips=num_clips, llm_fn=llm_fn, target_length=target_length, examples=examples)
     all_highlights: List[Dict] = []
-    if duration >= LONG_VIDEO_THRESHOLD:
+    # One pass over a whole video asks too much of a small model: score window by window.
+    if duration > chunk_size_seconds():
         chunks = chunk_transcript(transcript)
-        print(f"[highlights] long video — splitting into {len(chunks)} chunks of {chunk_size_seconds()}s", flush=True)
+        print(f"[highlights] splitting into {len(chunks)} overlapping windows of {chunk_size_seconds()}s", flush=True)
         for i, chunk in enumerate(chunks):
             offset = chunk.get("_offset", 0)
             text = build_transcript_text(chunk, offset=offset)
@@ -575,7 +596,12 @@ def get_highlights(
         all_highlights = call_highlight_api(text, content_info, duration, **kwargs).get("highlights", [])
 
     all_highlights = snap_highlights(transcript, all_highlights)
-    highlights = dedupe_highlights(all_highlights)
+    # Models often ignore the length rule; enforce it before ranking.
+    hard_max = TARGET_LENGTHS.get((target_length or config.TARGET_LENGTH), TARGET_LENGTHS["medium"])[2]
+    in_range = [h for h in all_highlights if MIN_CLIP_SECONDS <= h["end_time"] - h["start_time"] <= hard_max]
+    if len(in_range) < len(all_highlights):
+        print(f"[highlights] dropped {len(all_highlights) - len(in_range)} clips outside {MIN_CLIP_SECONDS}-{hard_max}s", flush=True)
+    highlights = dedupe_highlights(in_range)
     if rerank:
         highlights = rerank_highlights(transcript, highlights, content_info, llm_fn)
 

@@ -323,9 +323,9 @@ Highlights:    7 candidates → kept top 3
 Edit `shorts_generator/highlights.py`:
 - **Virality framework**: `VIRALITY_CRITERIA` — the ranked list of signals the LLM optimizes for
 - **System prompt**: `HIGHLIGHT_SYSTEM_PROMPT` — duration sweet spot, hook rules, JSON schema
-- **Chunk size**: `CHUNK_SIZE_SECONDS` (default 1200) — chunk length for long videos
-- **Long-video threshold**: `LONG_VIDEO_THRESHOLD` (default 1800) — videos longer than this are chunked
-- **Chunk overlap**: `CHUNK_OVERLAP_SECONDS` (default 60) — overlap between chunks so cross-boundary clips aren't missed
+- **Rubric**: `RUBRIC` and `RUBRIC_WEIGHTS` — the model scores every clip 0-10 on hook, standalone and payoff; the overall 0-100 score is computed from those (hook 40%, standalone 30%, payoff 30%), not taken from the model
+- **Window size**: `HIGHLIGHT_CHUNK_SECONDS` in `.env` (default 300 with Ollama, else 1200) — the transcript goes to the model one window at a time, never all at once, and the top candidates are re-ranked against each other in a second pass
+- **Window overlap**: `CHUNK_OVERLAP_SECONDS` (default 60) — overlap between windows so cross-boundary clips aren't missed
 
 ### Polling / timeout
 Edit `shorts_generator/config.py` (or set env vars):

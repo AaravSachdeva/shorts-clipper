@@ -28,8 +28,8 @@ def test_chunk_prompts_are_relative_and_offsets_round_trip(monkeypatch):
         assert schema is hl.HIGHLIGHT_SCHEMA
         # Answer the way a model naturally would: with timestamps as shown.
         return json.dumps({"highlights": [{
-            "title": "t", "start_time": 100.0, "end_time": 140.0, "score": 70, "hook_score": 60,
-            "shareability_score": 50, "hook_sentence": "h", "on_screen_hook": "o", "virality_reason": "r",
+            "title": "t", "start_time": 100.0, "end_time": 140.0, "hook_sentence": "h",
+            "virality_reason": "r", "hook": 7, "standalone": 6, "payoff": 5, "on_screen_hook": "o",
         }]})
 
     out = hl.get_highlights(_transcript(), num_clips=3, llm_fn=fake_llm)["highlights"]
@@ -100,3 +100,62 @@ def test_empty_chunk_is_allowed_but_empty_full_video_is_not():
     import pytest
     with pytest.raises(RuntimeError):
         hl.call_highlight_api("x", {}, 600, 3, is_chunk=False, llm_fn=empty)
+
+
+def test_rubric_sets_score_in_code():
+    item = {"start_time": 0, "end_time": 30, "hook": 10, "standalone": 5, "payoff": 5, "score": 99}
+    clean = hl._sanitize_highlights([item], duration=60)[0]
+    assert clean["score"] == 70  # 0.4*100 + 0.3*50 + 0.3*50; the model's own score is ignored
+    assert clean["rubric"] == {"hook": 10, "standalone": 5, "payoff": 5}
+    over = hl._sanitize_highlights([{**item, "hook": 15, "payoff": -3}], duration=60)[0]
+    assert over["rubric"] == {"hook": 10, "standalone": 5, "payoff": 0}
+
+
+def test_missing_rubric_falls_back_to_model_score():
+    clean = hl._sanitize_highlights([{"start_time": 0, "end_time": 30, "score": 64}], duration=60)[0]
+    assert clean["score"] == 64 and "rubric" not in clean
+
+
+def test_rubric_in_prompt_and_schema():
+    seen = {}
+
+    def fake_llm(prompt, schema=None):
+        seen["prompt"], seen["schema"] = prompt, schema
+        return json.dumps({"highlights": [{"start_time": 0, "end_time": 20, "hook": 5, "standalone": 5, "payoff": 5}]})
+
+    hl.call_highlight_api("[0.0s] hi", {}, 300, 3, is_chunk=True, llm_fn=fake_llm)
+    for key in ("hook", "standalone", "payoff"):
+        assert key in seen["schema"]["properties"]["highlights"]["items"]["required"]
+        assert f"- {key}:" in seen["prompt"]
+    assert "score" not in seen["schema"]["properties"]["highlights"]["items"]["properties"]
+
+
+def test_short_video_is_windowed_too(monkeypatch):
+    monkeypatch.setattr(hl.config, "HIGHLIGHT_CHUNK_SECONDS", 300)
+    offsets = []
+
+    def fake_llm(prompt, schema=None):
+        if "classify the content type" in prompt:
+            return json.dumps({"content_type": "podcast", "density": "medium"})
+        if "candidate clips" in prompt:
+            return "not json"
+        offsets.append(prompt)
+        return json.dumps({"highlights": [{"start_time": 10, "end_time": 40, "hook": 5, "standalone": 5, "payoff": 5}]})
+
+    hl.get_highlights(_transcript(duration=600), num_clips=3, llm_fn=fake_llm)
+    assert len(offsets) == 3  # windows at 0, 240, 480 s: no single pass over the whole video
+
+
+def test_clips_outside_length_limits_are_dropped(monkeypatch):
+    monkeypatch.setattr(hl.config, "HIGHLIGHT_CHUNK_SECONDS", 1200)
+    spans = [(10, 15), (100, 130), (300, 452)]  # 5 s, 30 s, 152 s; medium allows 12-90 s
+
+    def fake_llm(prompt, schema=None):
+        if "classify the content type" in prompt:
+            return json.dumps({"content_type": "podcast", "density": "medium"})
+        return json.dumps({"highlights": [
+            {"start_time": a, "end_time": b, "hook": 5, "standalone": 5, "payoff": 5} for a, b in spans
+        ]})
+
+    out = hl.get_highlights(_transcript(duration=600), num_clips=3, llm_fn=fake_llm, rerank=False, target_length="medium")
+    assert [h["start_time"] for h in out["highlights"]] == [100.0]

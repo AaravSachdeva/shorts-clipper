@@ -44,7 +44,7 @@ Run the eight stages in order. Each maps to a module in `shorts_generator/`.
 1. **Download** (`downloader.py`) — pull the source video at the requested resolution (`360`/`480`/`720`/`1080`, default `720`).
 2. **Transcribe** (`transcriber.py`) — MuAPI `/openai-whisper` runs Whisper server-side and returns timestamped `verbose_json` segments. Billed per minute of audio.
 3. **Classify content type** — LLM tags the video (podcast / interview / tutorial / vlog / lecture / monologue) and density. Tune the highlight prompt per type.
-4. **Chunk if long** (`highlights.py`) — videos > `LONG_VIDEO_THRESHOLD` (1800s default) are split into `CHUNK_SIZE_SECONDS` (1200s default) windows with `CHUNK_OVERLAP_SECONDS` (60s default) overlap so cross-boundary highlights aren't missed.
+4. **Window the transcript** (`highlights.py`) — any video longer than one window is split into `HIGHLIGHT_CHUNK_SECONDS` windows (300s with Ollama, else 1200s) with `CHUNK_OVERLAP_SECONDS` (60s default) overlap so cross-boundary highlights aren't missed.
 5. **Rank highlights** — LLM scans each chunk through `VIRALITY_CRITERIA`:
    - **Hook moments** — strong opening line that stops the scroll
    - **Emotional peaks** — laughter, anger, vulnerability, awe
@@ -54,7 +54,7 @@ Run the eight stages in order. Each maps to a module in `shorts_generator/`.
    - **Quotable lines** — tight, screenshot-worthy phrasing
    - **Story peaks** — climax of a narrative arc
    - **Practical value** — actionable insight a viewer will save
-   Each candidate gets `start_time`, `end_time`, `score` 0–100, `title`, `hook_sentence`, `virality_reason`. Aim for 30–75s clips unless content dictates otherwise.
+   Each candidate gets `start_time`, `end_time`, `title`, `hook_sentence`, `virality_reason` and a 0–10 `hook` / `standalone` / `payoff` rubric; `score` 0–100 is computed from the rubric in code. Aim for 30–75s clips unless content dictates otherwise.
 6. **Dedupe** — collapse overlaps. Rule: if two candidates overlap > 50%, keep the higher score, drop the other.
 7. **Top-N selection** — sort surviving candidates by score, take `num_clips`.
 8. **Vertical auto-crop** (`clipper.py`) — render each highlight at `aspect_ratio`. Auto-handles face tracking and screen recordings; no Haar cascades.
@@ -128,9 +128,9 @@ When reporting back to the user, surface for each clip: rank, score, time range,
 - `shorts_generator/highlights.py`
   - `VIRALITY_CRITERIA` — reorder or extend signals
   - `HIGHLIGHT_SYSTEM_PROMPT` — duration sweet spot, hook rules, JSON schema
-  - `CHUNK_SIZE_SECONDS` — 1200s default
-  - `LONG_VIDEO_THRESHOLD` — 1800s default
+  - `RUBRIC` / `RUBRIC_WEIGHTS` — hook / standalone / payoff rubric and its weights (0.4 / 0.3 / 0.3)
   - `CHUNK_OVERLAP_SECONDS` — 60s default
+- `HIGHLIGHT_CHUNK_SECONDS` env — window size, 300s with Ollama, else 1200s
 - `shorts_generator/config.py` (or env vars)
   - `MUAPI_POLL_INTERVAL` — 5s
   - `MUAPI_POLL_TIMEOUT` — 1800s
