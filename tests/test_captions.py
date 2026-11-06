@@ -53,3 +53,13 @@ def test_braces_are_neutralised():
     doc = build_ass([_w("{\\b1}evil", 0, 1)], 2.0)
     caption = [e for e in _events(doc) if ",Caption," in e][0]
     assert "\\b1" not in caption.split(",,", 1)[1].replace("\\fscx108\\fscy108", "").replace("\\c", "")
+
+
+def test_whisper_split_tokens_are_joined():
+    # Whisper emits "U.S." as "u" + ".s" and "10,000" as "10" + ",000".
+    words = [_w("the", 0.0, 0.2), _w("u", 0.2, 0.3), _w(".s", 0.3, 0.5), _w("has", 0.5, 0.7),
+             _w("10", 1.0, 1.2), _w(",000", 1.2, 1.5), _w("users", 1.5, 1.9)]
+    texts = [x["text"] for g in group_words(words) for x in g]
+    assert texts == ["the", "u.s", "has", "10,000", "users"]
+    joined = [x for g in group_words(words) for x in g if x["text"] == "u.s"][0]
+    assert (joined["start"], joined["end"]) == (0.2, 0.5)

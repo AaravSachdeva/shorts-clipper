@@ -64,16 +64,21 @@ _DETECT_WIDTH = 640             # downscale frames to this width for detection
 _MIN_FACE_FRAC = 0.08           # ignore "faces" smaller than 8% of frame height
 _SHOT_CUT_THRESHOLD = 0.5       # frame-to-frame histogram correlation below this = hard cut
 _SHOT_DRIFT_THRESHOLD = 0.3     # correlation vs. the shot's first frame below this = gradual cut
+_SHOT_GRAY_DIFF = 8.0           # mean 0-255 change of a 64x36 gray frame above this = hard cut
 _MIN_SHOT_FRAMES = 6            # merge shorter "shots" (flashes, transitions)
 _MIN_FACE_SAMPLES = 3           # fewer face samples than this in a shot = no face
 
 
-def _is_cut(cv2, prev_hist, ref_hist, hist) -> bool:
+def _is_cut(cv2, prev_hist, ref_hist, hist, prev_gray=None, gray=None) -> bool:
     """Hard cuts change the histogram between consecutive frames; animated
     transitions (wipes, zooms, dissolves) only show up against the shot's
-    first frame."""
+    first frame. On a dark set every angle has the same near-black colours,
+    so hard cuts are also caught by how much the gray frame changes
+    (measured on a black-set podcast: cuts 10.7-19.8, movement within a shot <= 3.3)."""
     if prev_hist is None:
         return False
+    if prev_gray is not None and float(cv2.absdiff(prev_gray, gray).mean()) > _SHOT_GRAY_DIFF:
+        return True
     if cv2.compareHist(prev_hist, hist, cv2.HISTCMP_CORREL) < _SHOT_CUT_THRESHOLD:
         return True
     return ref_hist is not None and cv2.compareHist(ref_hist, hist, cv2.HISTCMP_CORREL) < _SHOT_DRIFT_THRESHOLD
@@ -95,6 +100,7 @@ def _analyze_shots(cv2, in_path: str, src_w: int, src_h: int):
     samples = []
     prev_hist = None
     ref_hist = None
+    prev_gray = None
     idx = 0
     while True:
         ret, frame = cap.read()
@@ -103,15 +109,18 @@ def _analyze_shots(cv2, in_path: str, src_w: int, src_h: int):
         frame = frame[:src_h]
         small = cv2.resize(frame, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
 
-        hsv = cv2.cvtColor(cv2.resize(small, (64, 36)), cv2.COLOR_BGR2HSV)
+        tiny = cv2.resize(small, (64, 36))
+        hsv = cv2.cvtColor(tiny, cv2.COLOR_BGR2HSV)
+        tiny_gray = cv2.cvtColor(tiny, cv2.COLOR_BGR2GRAY)
         hist = cv2.calcHist([hsv], [0, 1], None, [16, 16], [0, 180, 0, 256])
         cv2.normalize(hist, hist)
         if ref_hist is None:
             ref_hist = hist
-        if _is_cut(cv2, prev_hist, ref_hist, hist) and idx - shot_starts[-1] >= _MIN_SHOT_FRAMES:
+        if _is_cut(cv2, prev_hist, ref_hist, hist, prev_gray, tiny_gray) and idx - shot_starts[-1] >= _MIN_SHOT_FRAMES:
             shot_starts.append(idx)
             ref_hist = hist
         prev_hist = hist
+        prev_gray = tiny_gray
 
         if idx % _DETECT_EVERY_N_FRAMES == 0:
             gray = cv2.equalizeHist(cv2.cvtColor(small, cv2.COLOR_BGR2GRAY))

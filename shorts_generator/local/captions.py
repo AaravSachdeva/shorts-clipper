@@ -43,9 +43,16 @@ def _clean(word: str) -> str:
 
 def group_words(words: List[Dict]) -> List[List[Dict]]:
     """Split words into short caption lines, breaking on pauses and sentence ends."""
+    joined: List[Dict] = []
+    for w in words:
+        # Whisper splits "U.S." into "u" + ".s" and "10,000" into "10" + ",000"; glue them back.
+        if joined and re.match(r"[.,]\w", w["word"].strip()):
+            joined[-1] = {**joined[-1], "word": joined[-1]["word"].strip() + w["word"].strip(), "end": w["end"]}
+        else:
+            joined.append(w)
     groups: List[List[Dict]] = []
     cur: List[Dict] = []
-    for w in words:
+    for w in joined:
         text = _clean(w["word"])
         if not text:
             continue
