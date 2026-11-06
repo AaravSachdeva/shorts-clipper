@@ -337,10 +337,10 @@ def build_transcript_text(transcript: Dict, offset: float = 0.0) -> str:
     return "\n".join(f"[{s['start'] - offset:.1f}s] {s['text'].strip()}" for s in segments)
 
 
-def chunk_transcript(transcript: Dict) -> List[Dict]:
+def chunk_transcript(transcript: Dict, size: Optional[int] = None) -> List[Dict]:
     segments = transcript.get("segments", [])
     duration = transcript.get("duration", segments[-1]["end"] if segments else 0)
-    size = chunk_size_seconds()
+    size = size or chunk_size_seconds()
     chunks = []
     start = 0
     while start < duration:
