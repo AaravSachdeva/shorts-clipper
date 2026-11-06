@@ -64,8 +64,8 @@ def list_videos(ydl, source: str, limit: int) -> List[str]:
     return urls
 
 
-def _caption_words(ydl, info: Dict) -> List[Dict]:
-    """First ~20s of English auto (or manual) captions as [{t, w}] via json3."""
+def _caption_words(ydl, info: Dict, max_seconds: float = 20) -> List[Dict]:
+    """English auto (or manual) captions up to `max_seconds` as [{t, w}] via json3."""
     tracks = (info.get("subtitles") or {}).get("en") or (info.get("automatic_captions") or {}).get("en") or []
     url = next((t["url"] for t in tracks if t.get("ext") == "json3"), None)
     if not url:
@@ -77,7 +77,7 @@ def _caption_words(ydl, info: Dict) -> List[Dict]:
     words = []
     for ev in data.get("events", []):
         t0 = ev.get("tStartMs", 0) / 1000
-        if t0 > 20:
+        if t0 > max_seconds:
             break
         for seg in ev.get("segs") or []:
             w = (seg.get("utf8") or "").strip()

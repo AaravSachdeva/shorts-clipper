@@ -30,3 +30,21 @@ def test_summary_compares_top_decile():
 
 def test_summary_needs_enough_rows():
     assert "at least 30" in bm.summarize([{"views_per_day": 1}], "views_per_day")
+
+
+class _CapYdl:
+    def __init__(self, data):
+        self.data = data
+
+    def urlopen(self, url):
+        import io
+        import json as _json
+        return io.BytesIO(_json.dumps(self.data).encode())
+
+
+def test_caption_words_max_seconds():
+    data = {"events": [{"tStartMs": 5000, "segs": [{"utf8": "early"}]},
+                       {"tStartMs": 30000, "segs": [{"utf8": "late"}]}]}
+    info = {"automatic_captions": {"en": [{"ext": "json3", "url": "u"}]}}
+    assert [w["w"] for w in bm._caption_words(_CapYdl(data), info)] == ["early"]
+    assert [w["w"] for w in bm._caption_words(_CapYdl(data), info, max_seconds=float("inf"))] == ["early", "late"]
