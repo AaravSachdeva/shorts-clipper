@@ -1,0 +1,17 @@
+{
+  "episode": "source_BV7QRw8wtjs",
+  "source": "/home/aarav/shorts-clipper/output/source_BV7QRw8wtjs.mp4",
+  "language": null,
+  "split": "tune",
+  "gold": [
+    {
+      "start": 1820.5,
+      "end": 1879.92,
+      "match_ratio": 0.981,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 1158090,
+      "url": "https://www.youtube.com/watch?v=LrQqkEC7hao"
+    }
+  ]
+}
