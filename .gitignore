@@ -6,3 +6,6 @@ venv/
 output/
 *.mp4
 .DS_Store
+work/
+eval/_shorts_cache/
+.superpowers/
