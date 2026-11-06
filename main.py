@@ -60,7 +60,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--language", default=None, help="Force Whisper language code, e.g. 'en' (default: auto-detect)")
     parser.add_argument("--output-json", default=None, help="Write the full result JSON to this path")
     parser.add_argument("--profile", choices=sorted(PROFILES), help="Apply a bundle of local-mode settings (see README)")
-    parser.add_argument("--llm-provider", choices=["openai", "gemini", "ollama"], help="Local-mode LLM (overrides LLM_PROVIDER)")
+    parser.add_argument("--llm-provider", choices=["openai", "gemini", "ollama", "claude"], help="Local-mode LLM (overrides LLM_PROVIDER)")
     parser.add_argument("--target-length", choices=["short", "medium", "long"], help="Clip length: short ≈15-35s, medium ≈20-60s (default), long ≈45-90s")
     parser.add_argument("--no-captions", action="store_true", help="Don't burn in word-highlight captions")
     parser.add_argument("--no-hook", action="store_true", help="Don't show the on-screen hook title for the first 3s")

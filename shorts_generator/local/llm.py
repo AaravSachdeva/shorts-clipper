@@ -1,9 +1,13 @@
-"""Local LLM backends — OpenAI, Gemini, or Ollama, selected by LLM_PROVIDER.
+"""Local LLM backends — OpenAI, Gemini, Ollama or Claude, selected by LLM_PROVIDER.
 
 Every backend takes (prompt, schema=None). `schema` is a JSON Schema dict for
 the expected response; providers that support constrained/structured output
 use it, and the caller still validates the result either way.
 """
+import json
+import subprocess
+import tempfile
+import time
 from typing import Dict, Optional
 
 from .. import config
@@ -184,7 +188,82 @@ def release_ollama() -> None:
         pass
 
 
+# --- Claude (headless Claude Code) -------------------------------------------
+
+# An empty working directory, so no project CLAUDE.md or settings are found.
+_claude_cwd: Optional[str] = None
+
+
+def _claude_run(prompt: str, schema: Optional[Dict] = None) -> Dict:
+    """Run one isolated `claude -p` call and return the CLI's parsed JSON result.
+
+    The model sees only `prompt`: no default system prompt, no tools, no user
+    settings (so no hooks or plugins), no MCP servers, no skills or slash commands.
+    """
+    global _claude_cwd
+    if _claude_cwd is None:
+        _claude_cwd = tempfile.mkdtemp(prefix="claude-llm-")
+    args = [
+        "claude", "-p",
+        "--model", config.CLAUDE_MODEL,
+        "--output-format", "json",
+        "--system-prompt", "",
+        "--tools", "",
+        "--setting-sources", "project",
+        "--strict-mcp-config",
+        "--disable-slash-commands",
+        "--no-session-persistence",
+        "--effort", config.CLAUDE_EFFORT,
+    ]
+    if schema:
+        args += ["--json-schema", json.dumps(schema)]
+    t0 = time.time()
+    try:
+        proc = subprocess.run(
+            args, input=prompt, cwd=_claude_cwd, capture_output=True, text=True,
+            timeout=config.CLAUDE_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise RuntimeError(f"claude -p: {e}") from e
+    try:
+        data = json.loads(proc.stdout or "")
+    except ValueError:
+        data = {}
+    if proc.returncode != 0 or not isinstance(data, dict) or data.get("is_error"):
+        detail = str(data.get("result") or "") if isinstance(data, dict) else ""
+        raise RuntimeError(f"claude -p: {(detail or proc.stderr or proc.stdout or 'no output')[:300]}")
+    usage = data.get("usage") or {}
+    tokens_in = sum(int(usage.get(k) or 0) for k in
+                    ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
+    print(
+        f"[llm/claude] {config.CLAUDE_MODEL}: {tokens_in} input + {usage.get('output_tokens')} output tokens "
+        f"in {time.time() - t0:.0f}s",
+        flush=True,
+    )
+    return data
+
+
+def call_claude_llm(prompt: str, schema: Optional[Dict] = None) -> str:
+    """Claude backend (LLM_PROVIDER=claude): a stand-in for the local model during development."""
+    data = _claude_run(prompt, schema)
+    if data.get("structured_output") is not None:
+        return json.dumps(data["structured_output"])
+    return str(data.get("result") or "")
+
+
 # --- dispatch ---------------------------------------------------------------
+
+def model_id() -> str:
+    """Provider and model behind call_local_llm, e.g. "claude:claude-haiku-5-5"."""
+    provider = (config.LLM_PROVIDER or "openai").strip().lower()
+    model = {
+        "openai": OPENAI_MODEL,
+        "gemini": GEMINI_MODEL,
+        "ollama": config.OLLAMA_MODEL,
+        "claude": config.CLAUDE_MODEL,
+    }.get(provider, "")
+    return f"{provider}:{model}"
+
 
 def call_local_llm(prompt: str, schema: Optional[Dict] = None) -> str:
     """Dispatch to the configured local LLM provider."""
@@ -195,8 +274,10 @@ def call_local_llm(prompt: str, schema: Optional[Dict] = None) -> str:
         return call_gemini_llm(prompt, schema)
     if provider == "ollama":
         return call_ollama_llm(prompt, schema)
+    if provider == "claude":
+        return call_claude_llm(prompt, schema)
     raise RuntimeError(
-        f"Unknown LLM_PROVIDER={provider!r}. Use 'openai', 'gemini', or 'ollama'."
+        f"Unknown LLM_PROVIDER={provider!r}. Use 'openai', 'gemini', 'ollama', or 'claude'."
     )
 
 

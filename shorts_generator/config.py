@@ -37,6 +37,14 @@ OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "10m").strip()
 # and gemma4:12b once thought for over an hour on one window without answering. Off by default.
 OLLAMA_THINK = os.getenv("OLLAMA_THINK", "false").strip().lower() in ("1", "true", "yes")
 
+# Claude (LLM_PROVIDER=claude) — development stand-in for the local model, via headless `claude -p`
+# on the user's Claude login (counts against that plan's usage limits).
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-5-5").strip()
+CLAUDE_EFFORT = os.getenv("CLAUDE_EFFORT", "low").strip()  # closest the CLI offers to "thinking off"
+CLAUDE_TIMEOUT_SECONDS = float(os.getenv("CLAUDE_TIMEOUT", "600"))
+# Parallel LLM calls in the deep selector. Keep 1 for Ollama (one model in RAM).
+LLM_WORKERS = int(os.getenv("LLM_WORKERS", "1"))
+
 # Highlight selection.
 # Transcript window per highlight call. Small local models do better on ~5 min windows.
 HIGHLIGHT_CHUNK_SECONDS = int(
