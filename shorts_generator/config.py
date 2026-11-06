@@ -46,6 +46,11 @@ CLAUDE_TIMEOUT_SECONDS = float(os.getenv("CLAUDE_TIMEOUT", "600"))
 LLM_WORKERS = int(os.getenv("LLM_WORKERS", "1"))
 # Per-episode work files of the deep selector and the eval: work/<episode>/calls/, loudness.json, deep.json
 WORK_DIR = os.getenv("WORK_DIR", "work").strip()
+# classic = the one-pass highlights.py selector; deep = shorts_generator/selection (experimental)
+SELECTOR = os.getenv("SELECTOR", "classic").strip().lower()
+SCORE_SAMPLES = int(os.getenv("SCORE_SAMPLES", "1"))      # answers per deep scoring question
+TOURNAMENT_MAX = int(os.getenv("TOURNAMENT_MAX", "18"))   # candidates in the pairwise tournament
+MMR_LAMBDA = float(os.getenv("MMR_LAMBDA", "0.3"))        # variety penalty for picks from one chapter
 
 # Highlight selection.
 # Transcript window per highlight call. Small local models do better on ~5 min windows.

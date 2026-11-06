@@ -10,6 +10,7 @@ Two modes:
 import time
 from typing import Dict, List, Optional
 
+from . import config
 from .clipper import crop_highlights
 from .downloader import download_youtube
 from .highlights import call_muapi_llm, get_highlights
@@ -45,7 +46,12 @@ def _run_local(
 
     t = time.time()
     try:
-        highlights_result = get_highlights(transcript, num_clips=num_clips, llm_fn=call_local_llm)
+        if config.SELECTOR == "deep":
+            from .selection import run_deep
+
+            highlights_result = run_deep(transcript, source_path, num_clips, llm_fn=call_local_llm)
+        else:
+            highlights_result = get_highlights(transcript, num_clips=num_clips, llm_fn=call_local_llm)
         all_highlights: List[Dict] = highlights_result.get("highlights", [])
         if not all_highlights:
             raise RuntimeError("Highlight generator returned zero clips.")

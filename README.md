@@ -70,8 +70,8 @@ Don't want to self-host? The [AI Clipping API](https://muapi.ai/playground/ai-cl
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator.git
-   cd AI-Youtube-Shorts-Generator
+   git clone https://github.com/AaravSachdeva/shorts-clipper.git
+   cd shorts-clipper
    ```
 
 2. **Create and activate a virtual environment:**
@@ -152,6 +152,28 @@ Notes:
   - Whisper `small` transcription took 27 min and peaked at 3.7 GB RAM. `large-v3-turbo` is slower and more accurate.
   - Rendering 3 clips (2.5 min of video in total) took about 7 min.
   - Ollama step not measured yet. Expect roughly 1–2 h for an 8B model on CPU; the run prints the real figure.
+
+### Deep selector (experimental)
+
+`--selector deep` replaces the one-pass highlight step with a multi-stage pipeline in `shorts_generator/selection/`. It builds a short summary of the whole episode first (the "bible"), proposes candidates from 5-minute windows and from loudness peaks, asks six narrow questions about each candidate (hook, payoff, emotion, standalone, novelty, ending), combines the answers with fixed weights, ranks the best ones in a pairwise tournament asked in both orders, and spreads the final picks across the episode's chapters. It reads text only for now.
+
+During development the model behind it is Claude Haiku, run through headless `claude -p` (needs the Claude Code CLI, signed in):
+
+```bash
+python main.py output/source_<id>.mp4 --mode local --profile claude-deep --num-clips 3
+```
+
+Each call is a fresh `claude -p` process with no tools, no settings, no MCP servers and no project files; the model still sees Claude Code's short fixed preamble (about 600 tokens). Calls count against your Claude plan's usage limits, and one 2–3 hour episode is on the order of a thousand calls. Every answer is cached in `work/<episode>/calls/`, so a run that stops on a usage limit or a crash resumes where it left off; `work/<episode>/deep.json` shows the bible, every candidate's answers and the picks. `--profile gemma-deep` runs the same pipeline on Ollama's `gemma4:12b` and is untested.
+
+Measure it before trusting it. Build gold clips for an episode from the channel's official Shorts (matched by caption text), then compare selectors:
+
+```bash
+python -m shorts_generator.selection.gold --shorts "https://www.youtube.com/@channel/shorts" --episode output/source_<id>.mp4
+LLM_PROVIDER=claude LLM_WORKERS=4 HIGHLIGHT_CHUNK_SECONDS=300 \
+  python -m shorts_generator.selection.eval --selectors random,signal,classic,deep --split all
+```
+
+The report goes to `eval/report.md` (precision of the top 5, NDCG@10, candidate recall, boundary error, LLM calls). `--skip bible`, `--skip tournament` and `--samples 3` rerun the deep selector without a stage, to see what each one is worth.
 
 ### With options
 
@@ -256,14 +278,15 @@ xargs -a urls.txt -I{} python main.py "{}"
 | `--format` | `720` | Source download resolution: `360` / `480` / `720` / `1080` |
 | `--language` | auto | Force Whisper language code (e.g. `en`) |
 | `--output-json` | — | Dump the full result (transcript + all candidates) to a file |
-| `--profile` | — | `cpu-slow` or `cpu-quality`: Ollama + CPU Whisper presets (local mode) |
-| `--llm-provider` | `LLM_PROVIDER` | `openai`, `gemini` or `ollama` (local mode) |
+| `--profile` | — | `cpu-slow` or `cpu-quality`: Ollama + CPU Whisper presets (local mode); `claude-deep` or `gemma-deep`: the deep selector |
+| `--llm-provider` | `LLM_PROVIDER` | `openai`, `gemini`, `ollama` or `claude` (local mode) |
 | `--target-length` | `medium` | `short` ≈15–35 s, `medium` ≈20–60 s, `long` ≈45–90 s |
 | `--no-captions` | — | Don't burn in captions |
 | `--no-hook` | — | Don't show the on-screen hook title for the first 3 s |
 | `--crop-bottom` | `0` | Cut this % of frame height off the bottom first (burned-in tickers or chat bars) |
 | `--no-rerank` | — | Skip the comparative re-rank of the top candidates |
 | `--examples` | — | JSONL of top-performing clip openings (from `research/benchmark.py`) |
+| `--selector` | `classic` | `classic` (one pass per window, then a re-rank) or `deep` (experimental, see above) |
 
 ### API mode vs Local mode
 

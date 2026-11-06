@@ -74,7 +74,7 @@ def play(cands: List[Dict], transcript: Dict, bible: Dict, ask: Ask) -> List[flo
     return bradley_terry(n, wins, ties)
 
 
-def _rank_scores(scores: Sequence[float]) -> List[float]:
+def rank_scores(scores: Sequence[float]) -> List[float]:
     n = len(scores)
     if n == 1:
         return [1.0]
@@ -86,7 +86,7 @@ def _rank_scores(scores: Sequence[float]) -> List[float]:
 
 def blend(bt: Sequence[float], comb: Sequence[float], w_bt: float = BT_WEIGHT) -> List[float]:
     """w_bt x Bradley-Terry rank score + (1 - w_bt) x combiner rank score; rank score 1 = best, 0 = worst."""
-    return [w_bt * a + (1 - w_bt) * b for a, b in zip(_rank_scores(bt), _rank_scores(comb))]
+    return [w_bt * a + (1 - w_bt) * b for a, b in zip(rank_scores(bt), rank_scores(comb))]
 
 
 def mmr(items: List[Dict], k: int, lam: float, chapters: List[Dict]) -> List[Dict]:

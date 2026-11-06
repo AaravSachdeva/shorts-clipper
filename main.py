@@ -42,6 +42,28 @@ PROFILES = {
         "LOCAL_WHISPER_MODEL": "large-v3-turbo",
         "LOCAL_WHISPER_DEVICE": "auto",  # GPU if CTranslate2 sees one, CPU fallback
     },
+    # Deep selector with Claude Haiku via headless `claude -p` as a development stand-in for the
+    # local model. Uses your Claude plan's limits; answers are cached in work/<episode>/calls/.
+    "claude-deep": {
+        "LLM_PROVIDER": "claude",
+        "SELECTOR": "deep",
+        "CLAUDE_MODEL": "claude-haiku-5-5",
+        "LLM_WORKERS": "4",
+        "HIGHLIGHT_CHUNK_SECONDS": "300",
+        "LOCAL_WHISPER_MODEL": "large-v3-turbo",
+        "LOCAL_WHISPER_DEVICE": "auto",  # GPU if CTranslate2 sees one, CPU fallback
+    },
+    # Deep selector on gemma4:12b (untested until the eval shows the deep path pays off).
+    "gemma-deep": {
+        "LLM_PROVIDER": "ollama",
+        "SELECTOR": "deep",
+        "OLLAMA_MODEL": "gemma4:12b",
+        "OLLAMA_NUM_CTX": "32768",  # the bible's merge prompt is roughly 20k tokens on a 3-hour episode
+        "LLM_WORKERS": "1",
+        "HIGHLIGHT_CHUNK_SECONDS": "300",
+        "LOCAL_WHISPER_MODEL": "large-v3-turbo",
+        "LOCAL_WHISPER_DEVICE": "auto",  # GPU if CTranslate2 sees one, CPU fallback
+    },
 }
 
 
@@ -67,6 +89,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--crop-bottom", type=float, metavar="PCT", help="Cut this %% of frame height off the bottom first (burned-in tickers/chat)")
     parser.add_argument("--no-rerank", action="store_true", help="Skip the global comparative re-rank of candidates")
     parser.add_argument("--examples", metavar="JSONL", help="Top-clip openings to show the LLM (from research/benchmark.py)")
+    parser.add_argument("--selector", choices=["classic", "deep"], help="Clip selector: classic (default) or deep (experimental, local mode)")
     return parser.parse_args()
 
 
@@ -82,6 +105,7 @@ def _apply_settings(args: argparse.Namespace) -> None:
         "CROP_BOTTOM_PCT": None if args.crop_bottom is None else str(args.crop_bottom),
         "HIGHLIGHT_RERANK": "false" if args.no_rerank else None,
         "HIGHLIGHT_EXAMPLES": args.examples,
+        "SELECTOR": args.selector,
     }
     for k, v in flag_env.items():
         if v is not None:

@@ -7,7 +7,7 @@ description: Generate viral 9:16 YouTube Shorts (or TikTok/Reels clips) from a l
 
 End-to-end pipeline that turns one long video into N viral-ready vertical clips. Each clip ships with a viral score (0–100), an opening hook line, and a one-sentence reason it should perform.
 
-Reference implementation: https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator
+Reference implementation: https://github.com/AaravSachdeva/shorts-clipper
 
 ## When to use this skill
 
@@ -35,7 +35,7 @@ If the user gave a URL and nothing else, use defaults and don't block on questio
 - A MuAPI key — set `MUAPI_API_KEY` in `.env`. Powers download, transcription, highlight ranking, and clipping. If missing, stop and ask the user for it; do not invent one.
 - `pip install -r requirements.txt` inside a venv
 
-If the repo isn't cloned yet, clone `https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator.git` into the working directory.
+If the repo isn't cloned yet, clone `https://github.com/AaravSachdeva/shorts-clipper.git` into the working directory.
 
 ## Pipeline (what to execute)
 

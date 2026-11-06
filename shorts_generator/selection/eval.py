@@ -17,6 +17,7 @@ from .. import config
 from ..boundaries import all_words
 from ..highlights import get_highlights
 from ..local.llm import call_local_llm
+from . import run_deep
 from .cache import cached_llm
 from .candidates import _span, iou, signal_spans
 from .loudness import loud_peaks, loudness_per_second
@@ -124,7 +125,19 @@ def run_selector(name: str, ep: Dict, transcript: Dict, run: int = 0,
         fn = cached_llm(call_local_llm, _work(ep) / "calls", "classic", run, stats)
         highlights = get_highlights(transcript, num_clips=TOP_N, llm_fn=fn)["highlights"]
         return {"picks": highlights[:TOP_N], "candidates": highlights, "stats": stats}
+    if name == "deep":
+        res = run_deep(transcript, ep["source"], TOP_N, llm_fn=call_local_llm, skip=skip, samples=samples,
+                       run=run, stats=stats)
+        return {"picks": res["highlights"], "candidates": res["candidates"], "stats": stats}
     raise ValueError(f"unknown selector {name!r}")
+
+
+def selector_label(name: str, skip: Iterable[str], samples: Optional[int]) -> str:
+    """Report row name, e.g. deep[-bible,samples=3]; only deep takes options."""
+    if name != "deep":
+        return name
+    parts = [f"-{s}" for s in skip] + ([f"samples={samples}"] if samples else [])
+    return f"deep[{','.join(parts)}]" if parts else "deep"
 
 
 def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
@@ -141,7 +154,7 @@ def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
             first = results[0]
             pairs = list(itertools.combinations([r["picks"] for r in results], 2))
             rows.append({
-                "selector": sel, "episode": ep["episode"],
+                "selector": selector_label(sel, skip, samples), "episode": ep["episode"],
                 "recall": recall(first["candidates"], gold),
                 "p5": precision_at(first["picks"], gold, 5),
                 "ndcg10": ndcg_at(first["picks"], gold, 10),
