@@ -33,6 +33,9 @@ OLLAMA_NUM_GPU = int(os.environ["OLLAMA_NUM_GPU"]) if os.getenv("OLLAMA_NUM_GPU"
 # CPU inference on a 14B model can take many minutes per chunk.
 OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT", "3600"))
 OLLAMA_KEEP_ALIVE = os.getenv("OLLAMA_KEEP_ALIVE", "10m").strip()
+# Reasoning models (gemma4, qwen3) think before answering. On a CPU that is ~90% of the time,
+# and gemma4:12b once thought for over an hour on one window without answering. Off by default.
+OLLAMA_THINK = os.getenv("OLLAMA_THINK", "false").strip().lower() in ("1", "true", "yes")
 
 # Highlight selection.
 # Transcript window per highlight call. Small local models do better on ~5 min windows.

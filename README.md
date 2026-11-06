@@ -203,6 +203,8 @@ With `LOCAL_WHISPER_DEVICE=auto` (the default, and what both profiles use), Whis
 
 Ollama splits layers between the GPU and the CPU itself, but its auto-fit keeps about 1.2 GB of VRAM free, which on a 2 GB card can mean no layers at all. `OLLAMA_NUM_GPU` sets the layer count yourself; too many fails the load with `cudaMalloc failed: out of memory`, so measure. Measured on a 2 GB MX150: gemma4:12b at `OLLAMA_NUM_CTX=65536` got 0 of 49 layers on auto; `OLLAMA_NUM_GPU=2` generated about 10% faster (2.33 vs 2.12 tok/s), and 3 or more ran out of VRAM. With llama3.1:8b at 16k context, auto (2 of 33) was as fast as forcing 6. Whisper finishes and frees the GPU before Ollama starts.
 
+Reasoning models such as gemma4 and qwen3 think before they answer. On a CPU that took about 90% of each window's time, and gemma4:12b once thought for over an hour on one window without answering, so it timed out. Thinking is off by default; set `OLLAMA_THINK=true` to turn it on.
+
 ### Review dashboard (approve or reject from your phone)
 
 `review.py` serves a small web page for reviewing local-mode shorts. Shorts are grouped by the long video they came from, and each card plays the clip and shows its title, caption and hashtags. Approve, Reject and Download buttons sit under each clip.

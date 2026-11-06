@@ -103,3 +103,18 @@ def test_num_gpu_sent_only_when_set(monkeypatch, num_gpu):
     monkeypatch.setattr(requests, "post", post)
     llm.call_local_llm("hi")
     assert sent.get("num_gpu") == num_gpu
+
+
+@pytest.mark.parametrize("think", [False, True])
+def test_think_setting_is_sent(monkeypatch, think):
+    monkeypatch.setattr(llm.config, "OLLAMA_THINK", think)
+    monkeypatch.setattr(requests, "get", lambda url, timeout: _tags("qwen3:8b"))
+    sent = {}
+
+    def post(url, json=None, timeout=None):
+        sent.update(json)
+        return _Resp(data={"message": {"content": "{}"}, "prompt_eval_count": 10, "eval_count": 1})
+
+    monkeypatch.setattr(requests, "post", post)
+    llm.call_local_llm("hi")
+    assert sent["think"] is think

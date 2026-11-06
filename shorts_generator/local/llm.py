@@ -139,6 +139,7 @@ def call_ollama_llm(prompt: str, schema: Optional[Dict] = None) -> str:
         "format": schema if schema else "json",
         "options": {"temperature": 0.2, "num_ctx": num_ctx},
         "keep_alive": config.OLLAMA_KEEP_ALIVE,
+        "think": config.OLLAMA_THINK,
     }
     if config.OLLAMA_NUM_GPU is not None:
         body["options"]["num_gpu"] = config.OLLAMA_NUM_GPU
