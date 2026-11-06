@@ -18,29 +18,12 @@ from ..boundaries import all_words
 from ..highlights import get_highlights
 from ..local.llm import call_local_llm
 from .cache import cached_llm
-from .candidates import signal_spans
+from .candidates import _span, iou, signal_spans
 from .loudness import loud_peaks, loudness_per_second
 
 MATCH_IOU = 0.5
 TOP_N = 10
 MIN_EPISODES_FOR_CONCLUSIONS = 10
-
-
-def _span(d) -> Tuple[float, float]:
-    """(start, end) of a pick (start_time/end_time), a gold clip (start/end) or a tuple."""
-    if isinstance(d, dict):
-        if "start_time" in d:
-            return float(d["start_time"]), float(d["end_time"])
-        return float(d["start"]), float(d["end"])
-    return float(d[0]), float(d[1])
-
-
-def iou(a, b) -> float:
-    """Temporal intersection over union of two spans."""
-    (s1, e1), (s2, e2) = _span(a), _span(b)
-    inter = min(e1, e2) - max(s1, s2)
-    union = max(e1, e2) - min(s1, s2)
-    return max(0.0, inter) / union if union > 0 else 0.0
 
 
 def match(picks: Sequence, gold: Sequence, k: int) -> List[Tuple[int, int, float]]:

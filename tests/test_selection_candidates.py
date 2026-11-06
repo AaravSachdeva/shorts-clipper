@@ -75,3 +75,69 @@ def test_signal_spans_cap_per_hour_keeps_strongest():
     times = [(t, "loudness", float(i)) for i, t in enumerate([300.0, 900.0, 1500.0, 2100.0, 2700.0])]
     spans = cd.signal_spans(words, times, duration=3600.0, per_hour=2)
     assert sorted(s["strength"] for s in spans) == [3.0, 4.0]
+
+
+def _window_transcript(duration=300.0):
+    segs = [{"start": float(t), "end": t + 9.5, "text": f"Sentence at {t}."} for t in range(0, int(duration), 10)]
+    return {"duration": duration, "segments": segs}
+
+
+def _window_ask(cands):
+    seen = []
+
+    def ask(prompt, schema, prompt_id, sample=0):
+        assert prompt_id.startswith("window@")
+        seen.append((prompt, sample))
+        return {"candidates": cands}
+    return ask, seen
+
+
+def test_each_window_asked_twice_with_bible_prefix():
+    ask, seen = _window_ask([])
+    cd.window_candidates(_window_transcript(), {"episode_summary": "about cats"}, ask)
+    from shorts_generator import highlights as hl
+    n = len(hl.chunk_transcript(_window_transcript(), size=300))
+    assert sorted(s for _, s in seen) == sorted([0, 1] * n)
+    assert all("about cats" in p and "OPINION BOMBS" in p for p, _ in seen)
+
+
+def test_out_of_window_and_inverted_spans_dropped():
+    ask, _ = _window_ask([
+        {"start": 10, "end": 40, "kind": "quotable", "why": "w"},
+        {"start": 50, "end": 45, "kind": "quotable", "why": "inverted"},
+        {"start": 400, "end": 430, "kind": "quotable", "why": "past the end"},
+    ])
+    out = cd.window_candidates(_window_transcript(), {}, ask)
+    assert [(c["start_time"], c["end_time"], c["window_ids"]) for c in out] == [(10.0, 40.0, [0])] * 2
+    assert out[0]["origin"] == ["llm"] and out[0]["kind"] == "quotable"
+
+
+def _c(s, e, origin="llm", w=None):
+    return {"start_time": s, "end_time": e, "origin": [origin], "kind": "k", "why": "y", "window_ids": w or []}
+
+
+def test_merge_unions_overlapping_spans_and_origins():
+    [m] = cd.merge([_c(0, 30, "llm", [1]), _c(4.5, 34.5, "loudness")], [], "medium")
+    assert (m["start_time"], m["end_time"]) == (0, 34.5)
+    assert m["origin"] == ["llm", "loudness"] and m["window_ids"] == [1]
+
+
+def test_merge_keeps_iou_half_separate():
+    assert len(cd.merge([_c(0, 30), _c(10, 40)], [], "medium")) == 2
+
+
+def test_merge_drops_out_of_range_lengths_and_numbers_by_start():
+    out = cd.merge([_c(500, 530), _c(0, 100), _c(200, 210), _c(100, 130)], [], "medium")
+    assert [(c["id"], c["start_time"]) for c in out] == [("c000", 100), ("c001", 500)]
+
+
+def test_generate_candidates_adds_loudness_and_bible_spans():
+    words = _sentences(150)  # 600 s
+    transcript = {"duration": 600.0, "segments": [{"start": 0, "end": 600, "text": "x", "words": words}]}
+    db = [-30.0] * 600
+    db[100] = -10.0
+    bible = {"setups_payoffs": [{"setup_t": 10, "payoff_t": 400, "description": "d"}], "running_jokes": []}
+    ask, _ = _window_ask([])
+    out = cd.generate_candidates(transcript, bible, db, ask)
+    origins = sorted(o for c in out for o in c["origin"])
+    assert origins == ["loudness", "payoff"]
