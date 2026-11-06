@@ -89,12 +89,24 @@ def blend(bt: Sequence[float], comb: Sequence[float], w_bt: float = BT_WEIGHT) -
     return [w_bt * a + (1 - w_bt) * b for a, b in zip(rank_scores(bt), rank_scores(comb))]
 
 
+def _overlaps(a: Dict, b: Dict) -> bool:
+    """More than half of the shorter clip is shared (the classic selector's dedupe rule)."""
+    s1, e1, s2, e2 = float(a["start_time"]), float(a["end_time"]), float(b["start_time"]), float(b["end_time"])
+    return min(e1, e2) - max(s1, s2) > 0.5 * min(e1 - s1, e2 - s2)
+
+
 def mmr(items: List[Dict], k: int, lam: float, chapters: List[Dict]) -> List[Dict]:
-    """Pick k items one at a time, each maximising final - lam x (1 if it shares a bible chapter with a pick)."""
+    """Pick k items one at a time, each maximising final - lam x (1 if it shares a bible chapter with a pick).
+
+    A candidate overlapping a picked clip by more than half is never picked: it would be the same short twice.
+    """
     chap = [chapter_of((float(x["start_time"]) + float(x["end_time"])) / 2, chapters) for x in items]
     left = list(range(len(items)))
     picked: List[int] = []
-    while left and len(picked) < k:
+    while len(picked) < k:
+        left = [i for i in left if not any(_overlaps(items[i], items[j]) for j in picked)]
+        if not left:
+            break
         def value(i):
             same = any(chap[i] is not None and chap[i] == chap[j] for j in picked)
             return items[i]["final"] - lam * (1.0 if same else 0.0)

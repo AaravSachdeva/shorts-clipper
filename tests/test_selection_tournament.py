@@ -94,3 +94,11 @@ def test_text_fields_answer_and_fallback():
         "title": "T", "hook_sentence": "h", "on_screen_hook": "o", "virality_reason": "r"}
     assert tn.text_fields(pick, _transcript(), {}, lambda *a, **k: None) == {
         "title": "Untitled Highlight", "hook_sentence": "", "on_screen_hook": "", "virality_reason": ""}
+
+
+def test_mmr_never_picks_overlapping_clips():
+    items = [{"final": 1.0, "start_time": 3408.1, "end_time": 3446.2},
+             {"final": 0.95, "start_time": 3408.1, "end_time": 3421.5},
+             {"final": 0.5, "start_time": 100.0, "end_time": 140.0}]
+    out = tn.mmr(items, k=3, lam=0.3, chapters=[])
+    assert [items.index(x) for x in out] == [0, 2]
