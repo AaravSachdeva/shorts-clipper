@@ -1,15 +1,29 @@
 """Evaluate clip selectors against labelled episodes (eval/<episode>/gold.json).
 
+    python -m shorts_generator.selection.eval --selectors random,signal,classic --split all
+
 Gold file: {"episode", "source", "language", "split": "tune"|"test",
             "gold": [{"start", "end", "rating", "origin", "views", "url", "match_ratio"}]}
 """
+import argparse
+import itertools
 import json
 import math
 import random
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+
+from .. import config
+from ..boundaries import all_words
+from ..highlights import get_highlights
+from ..local.llm import call_local_llm
+from .cache import cached_llm
+from .candidates import signal_spans
+from .loudness import loud_peaks, loudness_per_second
 
 MATCH_IOU = 0.5
+TOP_N = 10
+MIN_EPISODES_FOR_CONCLUSIONS = 10
 
 
 def _span(d) -> Tuple[float, float]:
@@ -102,3 +116,114 @@ def load_episodes(eval_dir: Path, split: str) -> List[Dict]:
             continue
         out.append(ep)
     return out
+
+
+# --- running selectors --------------------------------------------------------
+
+def _work(ep: Dict) -> Path:
+    return Path(config.WORK_DIR) / Path(ep["source"]).stem
+
+
+def run_selector(name: str, ep: Dict, transcript: Dict, run: int = 0,
+                 skip: Iterable[str] = (), samples: Optional[int] = None) -> Dict:
+    """{"picks": top-10 spans, "candidates": every span the selector considered, "stats": LLM call stats}."""
+    stats: Dict = {}
+    duration = float(transcript.get("duration") or 0)
+    if name == "random":
+        picks = random_spans(duration, n=TOP_N, seed=f"{ep['episode']}:{run}")
+        return {"picks": picks, "candidates": picks, "stats": stats}
+    if name == "signal":
+        db = loudness_per_second(ep["source"], _work(ep) / "loudness.json")
+        spans = signal_spans(all_words(transcript), [(float(t), "loudness", d) for t, d in loud_peaks(db)], duration)
+        spans.sort(key=lambda s: s["strength"], reverse=True)
+        return {"picks": spans[:TOP_N], "candidates": spans, "stats": stats}
+    if name == "classic":
+        fn = cached_llm(call_local_llm, _work(ep) / "calls", "classic", run, stats)
+        highlights = get_highlights(transcript, num_clips=TOP_N, llm_fn=fn)["highlights"]
+        return {"picks": highlights[:TOP_N], "candidates": highlights, "stats": stats}
+    raise ValueError(f"unknown selector {name!r}")
+
+
+def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
+             skip: Iterable[str] = (), samples: Optional[int] = None) -> List[Dict]:
+    """One metrics row per (selector, episode). Metrics come from run 0; stability needs runs >= 2."""
+    from ..local.transcriber import transcribe_local
+
+    rows = []
+    for ep in episodes:
+        transcript = transcribe_local(ep["source"], language=ep.get("language"))
+        gold = ep["gold"]
+        for sel in selectors:
+            results = [run_selector(sel, ep, transcript, run=r, skip=skip, samples=samples) for r in range(runs)]
+            first = results[0]
+            pairs = list(itertools.combinations([r["picks"] for r in results], 2))
+            rows.append({
+                "selector": sel, "episode": ep["episode"],
+                "recall": recall(first["candidates"], gold),
+                "p5": precision_at(first["picks"], gold, 5),
+                "ndcg10": ndcg_at(first["picks"], gold, 10),
+                "boundary": boundary_error(first["picks"], gold, 5),
+                "stability": sum(jaccard_top(a, b, 5) for a, b in pairs) / len(pairs) if pairs else None,
+                "calls": sum(r["stats"].get("calls", 0) for r in results),
+                "llm_seconds": sum(r["stats"].get("seconds", 0.0) for r in results),
+            })
+            print(f"[eval] {sel} on {ep['episode']}: P@5 {rows[-1]['p5']:.2f}", flush=True)
+    return rows
+
+
+def _mean(vals) -> Optional[float]:
+    vals = [v for v in vals if v is not None]
+    return sum(vals) / len(vals) if vals else None
+
+
+def _fmt(v: Optional[float], nd: int = 2) -> str:
+    return "–" if v is None else f"{v:.{nd}f}"
+
+
+def report(rows: List[Dict]) -> str:
+    """Markdown: one summary row per selector, then one row per selector and episode."""
+    n_eps = len({r["episode"] for r in rows})
+    out = ["# Clip selector eval", "",
+           f"Episodes: {n_eps} (conclusions about a stage need at least {MIN_EPISODES_FOR_CONCLUSIONS})", "",
+           "| selector | episodes | Recall@candidates | P@5 | NDCG@10 | boundary error (s) | stability | LLM calls | LLM hours |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for sel in dict.fromkeys(r["selector"] for r in rows):
+        rs = [r for r in rows if r["selector"] == sel]
+        out.append(
+            f"| {sel} | {len(rs)} | {_fmt(_mean(r['recall'] for r in rs))} | {_fmt(_mean(r['p5'] for r in rs))} "
+            f"| {_fmt(_mean(r['ndcg10'] for r in rs))} | {_fmt(_mean(r['boundary'] for r in rs), 1)} "
+            f"| {_fmt(_mean(r['stability'] for r in rs))} | {sum(r['calls'] for r in rs)} "
+            f"| {_fmt(sum(r['llm_seconds'] for r in rs) / 3600)} |"
+        )
+    out += ["", "## Per episode", "",
+            "| selector | episode | Recall@candidates | P@5 | NDCG@10 | boundary error (s) | LLM calls |",
+            "| --- | --- | --- | --- | --- | --- | --- |"]
+    for r in rows:
+        out.append(f"| {r['selector']} | {r['episode']} | {_fmt(r['recall'])} | {_fmt(r['p5'])} "
+                   f"| {_fmt(r['ndcg10'])} | {_fmt(r['boundary'], 1)} | {r['calls']} |")
+    return "\n".join(out) + "\n"
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description="Score clip selectors on labelled episodes")
+    ap.add_argument("--selectors", default="random,signal,classic")
+    ap.add_argument("--split", choices=["tune", "test", "all"], default="test")
+    ap.add_argument("--runs", type=int, default=1, help=">= 2 also measures stability (each run re-asks the model)")
+    ap.add_argument("--skip", default="", help="deep stages to skip, e.g. bible,tournament")
+    ap.add_argument("--samples", type=int, default=None, help="answers per deep scoring question")
+    ap.add_argument("--eval-dir", default="eval")
+    ap.add_argument("--out", default="eval/report.md")
+    args = ap.parse_args()
+
+    episodes = load_episodes(Path(args.eval_dir), args.split)
+    selectors = [s.strip() for s in args.selectors.split(",") if s.strip()]
+    skip = [s.strip() for s in args.skip.split(",") if s.strip()]
+    rows = evaluate(episodes, selectors, runs=args.runs, skip=skip, samples=args.samples)
+    md = report(rows) if rows else "# Clip selector eval\n\nEpisodes: 0 (no labelled episodes in this split)\n"
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.out).write_text(md, encoding="utf-8")
+    print(md)
+
+
+if __name__ == "__main__":
+    main()

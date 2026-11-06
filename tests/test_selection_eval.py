@@ -83,3 +83,72 @@ def test_load_episodes_filters_split_and_skips_empty_gold(tmp_path, capsys):
     assert [e["episode"] for e in ev.load_episodes(tmp_path, "test")] == ["b"]
     assert [e["episode"] for e in ev.load_episodes(tmp_path, "all")] == ["a", "b"]
     assert "c" in capsys.readouterr().out
+
+
+def test_report_has_row_per_selector():
+    rows = []
+    for sel in ("random", "signal", "classic"):
+        for ep in ("e1", "e2"):
+            rows.append({"selector": sel, "episode": ep, "recall": 0.5, "p5": 0.2, "ndcg10": 0.3,
+                         "boundary": 4.0, "stability": None, "calls": 10, "llm_seconds": 3600.0})
+    md = ev.report(rows)
+    for sel in ("random", "signal", "classic"):
+        assert f"| {sel} | 2 |" in md
+    assert "Episodes: 2" in md
+
+
+def _classic_fake():
+    import re as _re
+    calls = []
+
+    def fake(prompt, schema=None):
+        calls.append(prompt)
+        if "classify the content type" in prompt:
+            return json.dumps({"content_type": "podcast", "density": "medium"})
+        if "candidate clips" in prompt:
+            ids = [int(x) for x in _re.findall(r"^\[(\d+)\]", prompt, flags=_re.M)]
+            return json.dumps({"rankings": [{"id": i, "score": 50 + i} for i in ids]})
+        return json.dumps({"highlights": [{
+            "title": "t", "start_time": 10.0, "end_time": 40.0, "hook_sentence": "h", "virality_reason": "r",
+            "hook": 7, "standalone": 6, "payoff": 5, "on_screen_hook": "o"}]})
+    return fake, calls
+
+
+def _ep(tmp_path):
+    return {"episode": "e1", "source": str(tmp_path / "source_e1.mp4"), "gold": [_gold(10, 40)]}
+
+
+def _transcript(duration=200.0):
+    segs = [{"start": t, "end": t + 9.5, "text": f"Sentence at {t:.0f}."} for t in range(0, int(duration), 10)]
+    return {"duration": duration, "segments": segs}
+
+
+def test_classic_uses_cache(tmp_path, monkeypatch):
+    monkeypatch.setattr(ev.config, "WORK_DIR", str(tmp_path / "work"))
+    fake, calls = _classic_fake()
+    monkeypatch.setattr(ev, "call_local_llm", fake)
+    first = ev.run_selector("classic", _ep(tmp_path), _transcript())
+    n = len(calls)
+    second = ev.run_selector("classic", _ep(tmp_path), _transcript())
+    assert n > 0 and len(calls) == n
+    assert second["stats"].get("misses", 0) == 0 and second["stats"]["calls"] == first["stats"]["calls"]
+    assert [p["start_time"] for p in second["picks"]] == [10.0]
+
+
+def test_signal_picks_loudest_first(tmp_path, monkeypatch):
+    monkeypatch.setattr(ev.config, "WORK_DIR", str(tmp_path / "work"))
+    db = [-30.0] * 300
+    db[60], db[200] = -20.0, -10.0
+    monkeypatch.setattr(ev, "loudness_per_second", lambda src, cache: db)
+    words = [{"start": i * 0.5, "end": i * 0.5 + 0.4, "word": f"w{i}" + ("." if i % 8 == 7 else "")}
+             for i in range(600)]
+    transcript = {"duration": 300.0, "segments": [{"start": 0, "end": 300, "text": "x", "words": words}]}
+    out = ev.run_selector("signal", _ep(tmp_path), transcript)
+    assert [p["strength"] for p in out["picks"]] == [-10.0, -20.0]
+    assert out["candidates"] == out["picks"]
+
+
+def test_random_is_seeded_by_episode_and_run(tmp_path):
+    a = ev.run_selector("random", _ep(tmp_path), _transcript())["picks"]
+    assert a == ev.run_selector("random", _ep(tmp_path), _transcript())["picks"]
+    assert a != ev.run_selector("random", _ep(tmp_path), _transcript(), run=1)["picks"]
