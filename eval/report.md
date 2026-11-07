@@ -7,6 +7,7 @@ Episodes: 1 (conclusions about a stage need at least 10)
 | random | 1 | 0.00 | 0.00 | 0.00 | – | – | 0 | 0.00 |
 | signal | 1 | 0.00 | 0.00 | 0.00 | – | – | 0 | 0.00 |
 | classic | 1 | 0.00 | 0.00 | 0.00 | – | – | 45 | 1.04 |
+| deep | 1 | 0.00 | 0.00 | 0.00 | – | – | 1806 | 2.72 |
 
 ## Per episode
 
@@ -15,3 +16,4 @@ Episodes: 1 (conclusions about a stage need at least 10)
 | random | source_BV7QRw8wtjs | 0.00 | 0.00 | 0.00 | – | 0 |
 | signal | source_BV7QRw8wtjs | 0.00 | 0.00 | 0.00 | – | 0 |
 | classic | source_BV7QRw8wtjs | 0.00 | 0.00 | 0.00 | – | 45 |
+| deep | source_BV7QRw8wtjs | 0.00 | 0.00 | 0.00 | – | 1806 |
