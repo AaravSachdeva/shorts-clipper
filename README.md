@@ -170,7 +170,7 @@ python main.py output/source_<id>.mp4 --mode local --profile router-deep --num-c
 
 `router-deep` uses `gemini-3.5-flash-lite` with 4 parallel calls; override it with `OPENAI_MODEL`. Every call sends the JSON schema as a system message too, because routers often ignore `response_format`, and a 429 is retried every 30 s for up to 15 minutes (`RATE_LIMIT_WAIT`). One 1–3 hour episode is on the order of a thousand calls. `LLM_PROVIDER=claude` (headless `claude -p` on your Claude plan) still works as an alternative. Every answer is cached in `work/<episode>/calls/`, so a run that stops on a usage limit or a crash resumes where it left off; `work/<episode>/deep.json` shows the bible, every candidate's answers and the picks. `--profile gemma-deep` runs the same pipeline on Ollama's `gemma4:12b` and is untested.
 
-Measure it before trusting it. Build gold clips for an episode from the channel's official Shorts (matched by caption text), then compare selectors:
+Measure it before trusting it. Build gold clips for an episode from the channel's official Shorts (each Short's audio is transcribed with the same Whisper model and matched to the episode by its words), then compare selectors:
 
 ```bash
 python -m shorts_generator.selection.gold --shorts "https://www.youtube.com/@channel/shorts" --episode output/source_<id>.mp4

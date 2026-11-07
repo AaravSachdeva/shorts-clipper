@@ -59,33 +59,31 @@ def test_episode_gold_records_matches():
 
 
 class _Ydl:
-    def __init__(self, info, fail_times=0):
-        self.info, self.fail_times, self.opened = info, fail_times, 0
+    def __init__(self, tmp_path):
+        self.tmp_path = tmp_path
+        self.downloaded = []
 
     def extract_info(self, url, download=False):
-        return self.info
+        self.downloaded.append(download)
+        return {"id": "abc", "ext": "m4a", "webpage_url": url, "title": "t", "view_count": 5}
 
-    def urlopen(self, url):
-        import io
-        import json as _json
-        self.opened += 1
-        if self.opened <= self.fail_times:
-            raise OSError("HTTP Error 429: Too Many Requests")
-        return io.BytesIO(_json.dumps({"events": [{"tStartMs": 0, "segs": [{"utf8": "hello world"}]}]}).encode())
+    def prepare_filename(self, info):
+        path = self.tmp_path / "abc.m4a"
+        path.write_bytes(b"x")
+        return str(path)
 
 
-_INFO = {"webpage_url": "u", "title": "t", "view_count": 5, "automatic_captions": {"en": [{"ext": "json3", "url": "c"}]}}
+def test_short_entry_transcribes_the_audio(tmp_path, monkeypatch):
+    from shorts_generator.local import transcriber
+    seen = {}
 
+    def fake_transcribe(path, language=None):
+        seen["args"] = (path, language)
+        return {"duration": 3.0, "segments": [{"start": 0, "end": 3, "text": "Hello world.", "words": [
+            {"start": 0.0, "end": 0.5, "word": " Hello"}, {"start": 0.5, "end": 1.0, "word": " world."}]}]}
 
-def test_short_entry_reads_captions():
-    assert gd._short_entry(_Ydl(_INFO), "u") == {"url": "u", "title": "t", "views": 5, "tokens": ["hello", "world"]}
-
-
-def test_failed_caption_download_is_not_an_empty_entry(monkeypatch):
-    monkeypatch.setattr(gd.time, "sleep", lambda s: None)
-    assert gd._short_entry(_Ydl(_INFO, fail_times=1), "u")["tokens"] == ["hello", "world"]
-    assert gd._short_entry(_Ydl(_INFO, fail_times=5), "u") is None
-
-
-def test_short_without_english_track_is_cached_empty():
-    assert gd._short_entry(_Ydl({**_INFO, "automatic_captions": {}}), "u")["tokens"] == []
+    monkeypatch.setattr(transcriber, "transcribe_local", fake_transcribe)
+    ydl = _Ydl(tmp_path)
+    entry = gd._short_entry(ydl, "u")
+    assert entry == {"url": "u", "title": "t", "views": 5, "tokens": ["Hello", "world."]}
+    assert ydl.downloaded == [True] and seen["args"] == (str(tmp_path / "abc.m4a"), "en")

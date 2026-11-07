@@ -9,7 +9,6 @@ import argparse
 import difflib
 import hashlib
 import json
-import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -19,7 +18,6 @@ MIN_BLOCK = 3            # matching runs shorter than this are coincidence
 NEAR_ANCHOR_SECONDS = 90  # a Short is one moment: ignore matches far from its main run
 MIN_RATIO = 0.5
 OFFICIAL_RATING = 4
-CAPTION_RETRY_SECONDS = 60  # YouTube answers 429 on caption downloads after a few hundred requests
 
 
 def match_short(ep_words: List[Dict], short_tokens: List[str]) -> Optional[Dict]:
@@ -69,48 +67,42 @@ def episode_gold(name: str, source: str, ep_words: List[Dict], shorts: List[Dict
             "gold": merge_gold(old.get("gold") or [], official)}
 
 
-def _short_entry(ydl, url: str) -> Optional[Dict]:
-    """A Short's caption tokens, views and URL; None when its English captions exist but would not download."""
-    from research.benchmark import _caption_words
+def _short_entry(ydl, url: str) -> Dict:
+    """A Short's spoken words (its audio through the same Whisper the episodes use), views and URL.
 
-    info = ydl.extract_info(url, download=False)
-    tracks = (info.get("subtitles") or {}).get("en") or (info.get("automatic_captions") or {}).get("en") or []
-    has_track = any(t.get("ext") == "json3" for t in tracks)
-    words = _caption_words(ydl, info, max_seconds=float("inf"))
-    if has_track and not words:
-        time.sleep(CAPTION_RETRY_SECONDS)
-        words = _caption_words(ydl, info, max_seconds=float("inf"))
-        if not words:
-            return None  # a failed download, not a Short without captions: never cache it as empty
+    YouTube caption downloads get throttled (HTTP 429) after a few hundred requests; audio downloads do not,
+    and Whisper-to-Whisper text matches more tightly than auto-captions.
+    """
+    from ..local.transcriber import transcribe_local
+
+    info = ydl.extract_info(url, download=True)
+    words = all_words(transcribe_local(ydl.prepare_filename(info), language="en"))
     return {"url": info.get("webpage_url") or url, "title": info.get("title"),
-            "views": info.get("view_count") or 0, "tokens": [t for w in words for t in w["w"].split()]}
+            "views": info.get("view_count") or 0, "tokens": [w["word"].strip() for w in words]}
 
 
 def _fetch_shorts(shorts_url: str, limit: int, cache_dir: Path) -> List[Dict]:
-    """Caption tokens, views and URL for a channel's Shorts; cached per video so reruns skip the network."""
+    """Spoken words, views and URL for a channel's Shorts; cached per video so reruns skip the network."""
+    import yt_dlp  # type: ignore
     from research.benchmark import _ydl, list_videos
 
-    ydl = _ydl(None)
     cache_dir.mkdir(parents=True, exist_ok=True)
+    audio = yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "format": "bestaudio",
+                              "outtmpl": str(cache_dir / "audio" / "%(id)s.%(ext)s"), "sleep_interval_requests": 1})
     out = []
-    failed = 0
-    for url in list_videos(ydl, shorts_url, limit):
+    for url in list_videos(_ydl(None), shorts_url, limit):
         path = cache_dir / f"{url.rstrip('/').split('/')[-1].split('=')[-1]}.json"
         if path.exists():
             out.append(json.loads(path.read_text(encoding="utf-8")))
             continue
         try:
-            entry = _short_entry(ydl, url)
-        except Exception as e:
-            print(f"[gold] skip {url}: {e.__class__.__name__}", flush=True)
-            continue
-        if entry is None:
-            failed += 1
-            print(f"[gold] captions for {url} would not download; not cached, rerun to retry", flush=True)
+            entry = _short_entry(audio, url)
+        except Exception as e:  # a failed download is skipped, never cached, so a rerun retries it
+            print(f"[gold] skip {url}: {e.__class__.__name__}: {str(e)[:120]}", flush=True)
             continue
         path.write_text(json.dumps(entry, ensure_ascii=False), encoding="utf-8")
         out.append(entry)
-    print(f"[gold] {len(out)} Shorts read from {shorts_url}; {failed} caption downloads failed", flush=True)
+    print(f"[gold] {len(out)} Shorts read from {shorts_url}", flush=True)
     return [s for s in out if s["tokens"]]
 
 
