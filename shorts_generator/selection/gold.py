@@ -9,6 +9,7 @@ import argparse
 import difflib
 import hashlib
 import json
+import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -18,6 +19,7 @@ MIN_BLOCK = 3            # matching runs shorter than this are coincidence
 NEAR_ANCHOR_SECONDS = 90  # a Short is one moment: ignore matches far from its main run
 MIN_RATIO = 0.5
 OFFICIAL_RATING = 4
+CAPTION_RETRY_SECONDS = 60  # YouTube answers 429 on caption downloads after a few hundred requests
 
 
 def match_short(ep_words: List[Dict], short_tokens: List[str]) -> Optional[Dict]:
@@ -67,30 +69,48 @@ def episode_gold(name: str, source: str, ep_words: List[Dict], shorts: List[Dict
             "gold": merge_gold(old.get("gold") or [], official)}
 
 
+def _short_entry(ydl, url: str) -> Optional[Dict]:
+    """A Short's caption tokens, views and URL; None when its English captions exist but would not download."""
+    from research.benchmark import _caption_words
+
+    info = ydl.extract_info(url, download=False)
+    tracks = (info.get("subtitles") or {}).get("en") or (info.get("automatic_captions") or {}).get("en") or []
+    has_track = any(t.get("ext") == "json3" for t in tracks)
+    words = _caption_words(ydl, info, max_seconds=float("inf"))
+    if has_track and not words:
+        time.sleep(CAPTION_RETRY_SECONDS)
+        words = _caption_words(ydl, info, max_seconds=float("inf"))
+        if not words:
+            return None  # a failed download, not a Short without captions: never cache it as empty
+    return {"url": info.get("webpage_url") or url, "title": info.get("title"),
+            "views": info.get("view_count") or 0, "tokens": [t for w in words for t in w["w"].split()]}
+
+
 def _fetch_shorts(shorts_url: str, limit: int, cache_dir: Path) -> List[Dict]:
     """Caption tokens, views and URL for a channel's Shorts; cached per video so reruns skip the network."""
-    from research.benchmark import _caption_words, _ydl, list_videos
+    from research.benchmark import _ydl, list_videos
 
     ydl = _ydl(None)
     cache_dir.mkdir(parents=True, exist_ok=True)
     out = []
+    failed = 0
     for url in list_videos(ydl, shorts_url, limit):
         path = cache_dir / f"{url.rstrip('/').split('/')[-1].split('=')[-1]}.json"
         if path.exists():
             out.append(json.loads(path.read_text(encoding="utf-8")))
             continue
         try:
-            info = ydl.extract_info(url, download=False)
+            entry = _short_entry(ydl, url)
         except Exception as e:
             print(f"[gold] skip {url}: {e.__class__.__name__}", flush=True)
             continue
-        words = _caption_words(ydl, info, max_seconds=float("inf"))
-        entry = {"url": info.get("webpage_url") or url, "title": info.get("title"),
-                 "views": info.get("view_count") or 0,
-                 "tokens": [t for w in words for t in w["w"].split()]}
+        if entry is None:
+            failed += 1
+            print(f"[gold] captions for {url} would not download; not cached, rerun to retry", flush=True)
+            continue
         path.write_text(json.dumps(entry, ensure_ascii=False), encoding="utf-8")
         out.append(entry)
-    print(f"[gold] {len(out)} Shorts with captions info from {shorts_url}", flush=True)
+    print(f"[gold] {len(out)} Shorts read from {shorts_url}; {failed} caption downloads failed", flush=True)
     return [s for s in out if s["tokens"]]
 
 
