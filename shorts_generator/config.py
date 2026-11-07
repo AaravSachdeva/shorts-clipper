@@ -13,6 +13,10 @@ POLL_TIMEOUT_SECONDS = float(os.getenv("MUAPI_POLL_TIMEOUT", "600"))
 # Local-mode (--mode local) settings — only consulted when running offline.
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+# OPENAI_BASE_URL (read by the openai SDK itself) points this backend at any OpenAI-compatible router.
+# How long to keep retrying when the endpoint answers 429 (free routers throttle often).
+RATE_LIMIT_WAIT_SECONDS = float(os.getenv("RATE_LIMIT_WAIT", "900"))
+RATE_LIMIT_RETRY_SECONDS = 30
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").strip().lower()

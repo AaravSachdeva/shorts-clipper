@@ -127,8 +127,9 @@ def test_selector_flag_and_profiles(monkeypatch):
     main._apply_settings(main._parse_args())
     import os
     assert os.environ["SELECTOR"] == "deep"
-    assert main.PROFILES["claude-deep"]["LLM_PROVIDER"] == "claude"
-    assert main.PROFILES["claude-deep"]["SELECTOR"] == "deep"
+    assert main.PROFILES["router-deep"]["LLM_PROVIDER"] == "openai"
+    assert main.PROFILES["router-deep"]["OPENAI_MODEL"] == "gemini-3.5-flash-lite"
+    assert main.PROFILES["router-deep"]["SELECTOR"] == "deep"
     assert main.PROFILES["gemma-deep"]["OLLAMA_MODEL"] == "gemma4:12b"
 
 

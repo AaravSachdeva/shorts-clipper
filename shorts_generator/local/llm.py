@@ -13,7 +13,6 @@ from typing import Dict, Optional
 from .. import config
 from ..config import (
     GEMINI_MODEL,
-    OPENAI_MODEL,
     require_gemini_key,
     require_openai_key,
 )
@@ -29,20 +28,31 @@ def call_openai_llm(prompt: str, schema: Optional[Dict] = None) -> str:
             "    pip install -r requirements-local.txt"
         ) from e
 
+    from openai import RateLimitError  # type: ignore
+
     client = OpenAI(api_key=require_openai_key())
     kwargs = {}
+    messages = [{"role": "user", "content": prompt}]
     if schema:
         kwargs["response_format"] = {
             "type": "json_schema",
             "json_schema": {"name": "result", "schema": schema, "strict": False},
         }
-    response = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        temperature=0.7,
-        messages=[{"role": "user", "content": prompt}],
-        **kwargs,
-    )
-    return response.choices[0].message.content or ""
+        # Routers and many hosted models ignore response_format; the schema in the prompt still holds.
+        messages.insert(0, {"role": "system", "content":
+                            "Respond with only a JSON object that matches this JSON Schema, and nothing else:\n"
+                            + json.dumps(schema)})
+    waited = 0.0
+    while True:
+        try:
+            response = client.chat.completions.create(
+                model=config.OPENAI_MODEL, temperature=0.7, messages=messages, **kwargs)
+            return response.choices[0].message.content or ""
+        except RateLimitError as e:
+            if waited >= config.RATE_LIMIT_WAIT_SECONDS:
+                raise RuntimeError(f"openai: rate limited for {waited:.0f}s: {str(e)[:200]}") from e
+            time.sleep(config.RATE_LIMIT_RETRY_SECONDS)
+            waited += config.RATE_LIMIT_RETRY_SECONDS
 
 
 def call_gemini_llm(prompt: str, schema: Optional[Dict] = None) -> str:
@@ -257,7 +267,7 @@ def model_id() -> str:
     """Provider and model behind call_local_llm, e.g. "claude:claude-haiku-5-5"."""
     provider = (config.LLM_PROVIDER or "openai").strip().lower()
     model = {
-        "openai": OPENAI_MODEL,
+        "openai": config.OPENAI_MODEL,
         "gemini": GEMINI_MODEL,
         "ollama": config.OLLAMA_MODEL,
         "claude": config.CLAUDE_MODEL,

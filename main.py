@@ -42,12 +42,12 @@ PROFILES = {
         "LOCAL_WHISPER_MODEL": "large-v3-turbo",
         "LOCAL_WHISPER_DEVICE": "auto",  # GPU if CTranslate2 sees one, CPU fallback
     },
-    # Deep selector with Claude Haiku via headless `claude -p` as a development stand-in for the
-    # local model. Uses your Claude plan's limits; answers are cached in work/<episode>/calls/.
-    "claude-deep": {
-        "LLM_PROVIDER": "claude",
+    # Deep selector on an OpenAI-compatible router (OPENAI_BASE_URL + OPENAI_API_KEY in .env) as a
+    # development stand-in for the local model. Answers are cached in work/<episode>/calls/.
+    "router-deep": {
+        "LLM_PROVIDER": "openai",
         "SELECTOR": "deep",
-        "CLAUDE_MODEL": "claude-haiku-5-5",
+        "OPENAI_MODEL": "gemini-3.5-flash-lite",
         "LLM_WORKERS": "4",
         "HIGHLIGHT_CHUNK_SECONDS": "300",
         "LOCAL_WHISPER_MODEL": "large-v3-turbo",

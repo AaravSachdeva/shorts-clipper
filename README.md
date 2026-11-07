@@ -157,19 +157,24 @@ Notes:
 
 `--selector deep` replaces the one-pass highlight step with a multi-stage pipeline in `shorts_generator/selection/`. It builds a short summary of the whole episode first (the "bible"), proposes candidates from 5-minute windows and from loudness peaks, asks six narrow questions about each candidate (hook, payoff, emotion, standalone, novelty, ending), combines the answers with fixed weights, ranks the best ones in a pairwise tournament asked in both orders, and spreads the final picks across the episode's chapters. It reads text only for now.
 
-During development the model behind it is Claude Haiku, run through headless `claude -p` (needs the Claude Code CLI, signed in):
+During development the model behind it is any OpenAI-compatible endpoint, such as a self-hosted router. Put its address and key in `.env` (git ignores it):
 
 ```bash
-python main.py output/source_<id>.mp4 --mode local --profile claude-deep --num-clips 3
+OPENAI_BASE_URL=http://<router-host>:<port>/v1
+OPENAI_API_KEY=<key>
 ```
 
-Each call is a fresh `claude -p` process with no tools, no settings, no MCP servers and no project files; the model still sees Claude Code's short fixed preamble (about 600 tokens). Calls count against your Claude plan's usage limits, and one 2–3 hour episode is on the order of a thousand calls. Every answer is cached in `work/<episode>/calls/`, so a run that stops on a usage limit or a crash resumes where it left off; `work/<episode>/deep.json` shows the bible, every candidate's answers and the picks. `--profile gemma-deep` runs the same pipeline on Ollama's `gemma4:12b` and is untested.
+```bash
+python main.py output/source_<id>.mp4 --mode local --profile router-deep --num-clips 3
+```
+
+`router-deep` uses `gemini-3.5-flash-lite` with 4 parallel calls; override it with `OPENAI_MODEL`. Every call sends the JSON schema as a system message too, because routers often ignore `response_format`, and a 429 is retried every 30 s for up to 15 minutes (`RATE_LIMIT_WAIT`). One 1–3 hour episode is on the order of a thousand calls. `LLM_PROVIDER=claude` (headless `claude -p` on your Claude plan) still works as an alternative. Every answer is cached in `work/<episode>/calls/`, so a run that stops on a usage limit or a crash resumes where it left off; `work/<episode>/deep.json` shows the bible, every candidate's answers and the picks. `--profile gemma-deep` runs the same pipeline on Ollama's `gemma4:12b` and is untested.
 
 Measure it before trusting it. Build gold clips for an episode from the channel's official Shorts (matched by caption text), then compare selectors:
 
 ```bash
 python -m shorts_generator.selection.gold --shorts "https://www.youtube.com/@channel/shorts" --episode output/source_<id>.mp4
-LLM_PROVIDER=claude LLM_WORKERS=4 HIGHLIGHT_CHUNK_SECONDS=300 \
+LLM_PROVIDER=openai OPENAI_MODEL=gemini-3.5-flash-lite LLM_WORKERS=4 HIGHLIGHT_CHUNK_SECONDS=300 \
   python -m shorts_generator.selection.eval --selectors random,signal,classic,deep --split all
 ```
 
@@ -278,7 +283,7 @@ xargs -a urls.txt -I{} python main.py "{}"
 | `--format` | `720` | Source download resolution: `360` / `480` / `720` / `1080` |
 | `--language` | auto | Force Whisper language code (e.g. `en`) |
 | `--output-json` | — | Dump the full result (transcript + all candidates) to a file |
-| `--profile` | — | `cpu-slow` or `cpu-quality`: Ollama + CPU Whisper presets (local mode); `claude-deep` or `gemma-deep`: the deep selector |
+| `--profile` | — | `cpu-slow` or `cpu-quality`: Ollama + CPU Whisper presets (local mode); `router-deep` or `gemma-deep`: the deep selector |
 | `--llm-provider` | `LLM_PROVIDER` | `openai`, `gemini`, `ollama` or `claude` (local mode) |
 | `--target-length` | `medium` | `short` ≈15–35 s, `medium` ≈20–60 s, `long` ≈45–90 s |
 | `--no-captions` | — | Don't burn in captions |
