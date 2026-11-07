@@ -1,0 +1,17 @@
+{
+  "episode": "source_wwn5GUgcq80",
+  "source": "/home/aarav/shorts-clipper/output/source_wwn5GUgcq80.mp4",
+  "language": "en",
+  "split": "tune",
+  "gold": [
+    {
+      "start": 5943.54,
+      "end": 6012.18,
+      "match_ratio": 0.833,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 276184,
+      "url": "https://www.youtube.com/watch?v=PRSL-8WvORg"
+    }
+  ]
+}

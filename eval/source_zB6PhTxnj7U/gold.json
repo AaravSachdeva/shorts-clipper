@@ -1,0 +1,26 @@
+{
+  "episode": "source_zB6PhTxnj7U",
+  "source": "/home/aarav/shorts-clipper/output/source_zB6PhTxnj7U.mp4",
+  "language": "en",
+  "split": "test",
+  "gold": [
+    {
+      "start": 4776.18,
+      "end": 4880.9,
+      "match_ratio": 0.972,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 12628,
+      "url": "https://www.youtube.com/watch?v=YimYVB1GcZU"
+    },
+    {
+      "start": 2703.6,
+      "end": 2803.02,
+      "match_ratio": 1.0,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 482373,
+      "url": "https://www.youtube.com/watch?v=DI6Vf3ybTdQ"
+    }
+  ]
+}
