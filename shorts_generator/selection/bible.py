@@ -49,6 +49,10 @@ def build_bible(transcript: Dict, ask: Ask) -> Dict:
     parts = chunk_transcript(transcript, size=PART_SECONDS)
     map_t, map_id = load_prompt("bible_map")
     maps = pmap(lambda c: ask(map_t.format(transcript=build_transcript_text(c)), MAP_SCHEMA, map_id), parts)
+    missing = [i + 1 for i, m in enumerate(maps) if not m]
+    if missing:
+        # A bible with a part silently missing would differ on the next run and void every cached call after it.
+        raise RuntimeError(f"bible part {missing[0]} of {len(parts)} had no readable answer; rerun, or use --skip bible")
     notes = [
         f"Part {i + 1} ({c['_offset']:.0f}-{c['_offset'] + c['duration']:.0f}s):\n{json.dumps(m, ensure_ascii=False)}"
         for i, (c, m) in enumerate(zip(parts, maps)) if m

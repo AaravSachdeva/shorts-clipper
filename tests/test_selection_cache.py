@@ -78,7 +78,20 @@ def test_unparseable_answer_is_not_kept(tmp_path):
     assert ask("p", SCHEMA, "x") is None
     assert list(tmp_path.glob("*.json")) == []
     assert ask("p", SCHEMA, "x") is None
-    assert len(llm.prompts) == 2
+    assert len(llm.prompts) == 2 * cache.ASK_ATTEMPTS
+
+
+def test_unparseable_answer_is_retried_in_run(tmp_path):
+    answers = iter(["not json", '{"ok": 2}'])
+    prompts = []
+
+    def llm(prompt, schema=None):
+        prompts.append(prompt)
+        return next(answers)
+
+    ask = cache.make_ask(llm, tmp_path)
+    assert ask("p", SCHEMA, "x") == {"ok": 2}
+    assert ask("p", SCHEMA, "x") == {"ok": 2} and len(prompts) == 2
 
 
 def test_stats_count_hits_and_misses(tmp_path):

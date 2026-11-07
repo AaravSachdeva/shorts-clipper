@@ -152,3 +152,16 @@ def test_random_is_seeded_by_episode_and_run(tmp_path):
     a = ev.run_selector("random", _ep(tmp_path), _transcript())["picks"]
     assert a == ev.run_selector("random", _ep(tmp_path), _transcript())["picks"]
     assert a != ev.run_selector("random", _ep(tmp_path), _transcript(), run=1)["picks"]
+
+
+def test_merge_rows_replaces_same_label_and_episode():
+    old = [{"selector": "deep", "episode": "e1", "p5": 0.0}, {"selector": "classic", "episode": "e1", "p5": 0.2}]
+    new = [{"selector": "deep", "episode": "e1", "p5": 0.4}, {"selector": "deep[-bible]", "episode": "e1", "p5": 0.2}]
+    assert ev.merge_rows(old, new) == [old[1], new[0], new[1]]
+
+
+def test_evaluate_skips_transcript_without_word_timings(monkeypatch, capsys, tmp_path):
+    from shorts_generator.local import transcriber
+    monkeypatch.setattr(transcriber, "transcribe_local", lambda src, language=None: _transcript())
+    assert ev.evaluate([_ep(tmp_path)], ["random"]) == []
+    assert "no word timings" in capsys.readouterr().out

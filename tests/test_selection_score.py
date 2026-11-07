@@ -79,3 +79,7 @@ def test_extra_samples_asked_for_survivors():
     sc.score_candidates(_transcript(), {}, _cands(), ask, samples=2)
     beta = [(k, s) for clip, k, s in seen if clip == "beta"]
     assert sorted(beta) == sorted((k, s) for k in sc.QUESTIONS for s in (0, 1))
+
+
+def test_normalise_survives_infinity():
+    assert sc.normalise("emotion", {"score": float("inf")}) is None

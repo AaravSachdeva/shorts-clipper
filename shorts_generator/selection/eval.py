@@ -148,6 +148,9 @@ def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
     rows = []
     for ep in episodes:
         transcript = transcribe_local(ep["source"], language=ep.get("language"))
+        if not all_words(transcript):
+            print(f"[eval] skipping {ep['episode']}: transcript has no word timings", flush=True)
+            continue
         gold = ep["gold"]
         for sel in selectors:
             results = [run_selector(sel, ep, transcript, run=r, skip=skip, samples=samples) for r in range(runs)]
@@ -165,6 +168,12 @@ def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
             })
             print(f"[eval] {sel} on {ep['episode']}: P@5 {rows[-1]['p5']:.2f}", flush=True)
     return rows
+
+
+def merge_rows(old: List[Dict], new: List[Dict]) -> List[Dict]:
+    """Earlier rows plus this run's; a new row replaces an old one with the same selector label and episode."""
+    keys = {(r["selector"], r["episode"]) for r in new}
+    return [r for r in old if (r["selector"], r["episode"]) not in keys] + new
 
 
 def _mean(vals) -> Optional[float]:
@@ -214,7 +223,12 @@ def main() -> None:
     episodes = load_episodes(Path(args.eval_dir), args.split)
     selectors = [s.strip() for s in args.selectors.split(",") if s.strip()]
     skip = [s.strip() for s in args.skip.split(",") if s.strip()]
-    rows = evaluate(episodes, selectors, runs=args.runs, skip=skip, samples=args.samples)
+    # Rows from earlier runs are kept, so deep and its ablations (deep[-bible], ...) share one report.
+    rows_path = Path(args.out).with_name("rows.json")
+    old = json.loads(rows_path.read_text(encoding="utf-8")) if rows_path.exists() else []
+    rows = merge_rows(old, evaluate(episodes, selectors, runs=args.runs, skip=skip, samples=args.samples))
+    rows_path.parent.mkdir(parents=True, exist_ok=True)
+    rows_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
     md = report(rows) if rows else "# Clip selector eval\n\nEpisodes: 0 (no labelled episodes in this split)\n"
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(md, encoding="utf-8")

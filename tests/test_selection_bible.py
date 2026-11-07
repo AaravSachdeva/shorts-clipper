@@ -44,8 +44,16 @@ def test_map_prompts_use_absolute_timestamps():
     assert "[240.0s]" in seen["map"][1]
 
 
-def test_no_map_answers_gives_empty_bible():
-    assert bb.build_bible(_transcript(), lambda *a, **k: None) == {}
+def test_unreadable_part_stops_the_run():
+    import pytest
+
+    def ask(prompt, schema, prompt_id, sample=0):
+        if prompt_id.startswith("bible_map@") and "Transcript:\n[240.0s]" in prompt:
+            return None
+        return {"topics": [], "stories": [], "notable_lines": []} if prompt_id.startswith("bible_map@") else REDUCED
+
+    with pytest.raises(RuntimeError, match="bible part 2"):
+        bb.build_bible(_transcript(), ask)
 
 
 def test_chunk_transcript_size_override_keeps_default():

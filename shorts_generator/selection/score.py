@@ -40,7 +40,7 @@ def normalise(key: str, answer: Optional[Dict]) -> Optional[float]:
         return ANSWER_VALUES[key].get(str(answer.get("answer") or "").strip().lower())
     try:
         score = int(float(answer.get("score")))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return (max(1, min(5, score)) - 1) / 4
 

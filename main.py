@@ -115,6 +115,10 @@ def _apply_settings(args: argparse.Namespace) -> None:
 def main() -> int:
     args = _parse_args()
     _apply_settings(args)
+    if os.environ.get("SELECTOR", "").strip().lower() == "deep" and args.mode != "local":
+        # Otherwise api mode would silently run the classic selector on MuAPI, billed per call.
+        print("FAILED: the deep selector runs in local mode only; add --mode local", file=sys.stderr)
+        return 2
 
     from shorts_generator import generate_shorts
 

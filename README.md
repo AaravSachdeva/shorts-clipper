@@ -173,7 +173,7 @@ LLM_PROVIDER=claude LLM_WORKERS=4 HIGHLIGHT_CHUNK_SECONDS=300 \
   python -m shorts_generator.selection.eval --selectors random,signal,classic,deep --split all
 ```
 
-The report goes to `eval/report.md` (precision of the top 5, NDCG@10, candidate recall, boundary error, LLM calls). `--skip bible`, `--skip tournament` and `--samples 3` rerun the deep selector without a stage, to see what each one is worth.
+The report goes to `eval/report.md` (precision of the top 5, NDCG@10, candidate recall, boundary error, LLM calls). `--skip bible`, `--skip tournament` and `--samples 3` rerun the deep selector without a stage, to see what each one is worth. Rows from earlier runs are kept in `eval/rows.json`, so every selector and ablation lands in the same report.
 
 ### With options
 

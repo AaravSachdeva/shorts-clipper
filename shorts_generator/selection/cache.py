@@ -22,6 +22,9 @@ PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 LLMFn = Callable[..., str]
 # ask(prompt, schema, prompt_id, sample=0) -> parsed answer, or None when unparseable
 Ask = Callable[..., Optional[Dict]]
+# An unparseable answer is re-asked in the same run: a gap that only fills on a later run would
+# change the bible, and so every prompt built on it, which empties the cache for the rest of the episode.
+ASK_ATTEMPTS = 3
 
 
 def _cached(llm_fn: LLMFn, calls_dir: Path, prompt: str, schema: Optional[Dict], prompt_id: str,
@@ -68,16 +71,17 @@ def make_ask(llm_fn: LLMFn, calls_dir: Path, run: int = 0, stats: Optional[Dict]
     An answer that does not parse is dropped from the cache, so a rerun asks again.
     """
     def ask(prompt: str, schema: Dict, prompt_id: str, sample: int = 0) -> Optional[Dict]:
-        text, path = _cached(llm_fn, calls_dir, prompt, schema, prompt_id, sample, run, stats)
-        try:
-            parsed = _parse_json_loose(text)
-        except ValueError:
-            parsed = None
-        if not isinstance(parsed, dict):
+        for _ in range(ASK_ATTEMPTS):
+            text, path = _cached(llm_fn, calls_dir, prompt, schema, prompt_id, sample, run, stats)
+            try:
+                parsed = _parse_json_loose(text)
+            except ValueError:
+                parsed = None
+            if isinstance(parsed, dict):
+                return parsed
             print(f"[deep] unparseable answer to {prompt_id}; not cached: {text[:120]!r}", flush=True)
             path.unlink(missing_ok=True)
-            return None
-        return parsed
+        return None
     return ask
 
 

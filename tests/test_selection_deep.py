@@ -147,3 +147,16 @@ def test_eval_deep_passes_options_and_labels_rows(monkeypatch, tmp_path):
     assert ev.selector_label("deep", ["bible", "tournament"], 3) == "deep[-bible,-tournament,samples=3]"
     assert ev.selector_label("deep", [], None) == "deep"
     assert ev.selector_label("classic", ["bible"], 3) == "classic"
+
+
+def test_deep_selector_refuses_api_mode(monkeypatch, capsys):
+    monkeypatch.delenv("SELECTOR", raising=False)
+    monkeypatch.setattr(sys, "argv", ["main.py", "x", "--selector", "deep"])
+
+    def boom(**k):
+        raise AssertionError("must not start the pipeline")
+
+    import shorts_generator
+    monkeypatch.setattr(shorts_generator, "generate_shorts", boom)
+    assert main.main() == 2
+    assert "--mode local" in capsys.readouterr().err
