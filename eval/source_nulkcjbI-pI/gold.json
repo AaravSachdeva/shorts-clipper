@@ -1,0 +1,107 @@
+{
+  "episode": "source_nulkcjbI-pI",
+  "source": "/home/aarav/shorts-clipper/output/source_nulkcjbI-pI.mp4",
+  "language": "en",
+  "split": "test",
+  "gold": [
+    {
+      "start": 4609.3,
+      "end": 4697.98,
+      "match_ratio": 0.911,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 39075,
+      "url": "https://www.youtube.com/watch?v=oc_n16FS_VE"
+    },
+    {
+      "start": 1648.78,
+      "end": 1738.3,
+      "match_ratio": 0.961,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 8446,
+      "url": "https://www.youtube.com/watch?v=zbBLx1l38iY"
+    },
+    {
+      "start": 5501.7,
+      "end": 5623.28,
+      "match_ratio": 0.949,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 30357,
+      "url": "https://www.youtube.com/watch?v=SKbXRm1PMhs"
+    },
+    {
+      "start": 5501.7,
+      "end": 5623.28,
+      "match_ratio": 0.926,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 73572,
+      "url": "https://www.youtube.com/watch?v=u_Ai83-5_o8"
+    },
+    {
+      "start": 3318.32,
+      "end": 3410.18,
+      "match_ratio": 0.953,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 300703,
+      "url": "https://www.youtube.com/watch?v=JzScfo9u5C8"
+    },
+    {
+      "start": 5673.38,
+      "end": 5700.2,
+      "match_ratio": 0.944,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 103478,
+      "url": "https://www.youtube.com/watch?v=JQJrjEfwm7Q"
+    },
+    {
+      "start": 5394.82,
+      "end": 5441.3,
+      "match_ratio": 0.562,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 85614,
+      "url": "https://www.youtube.com/watch?v=m05ImM8FBH0"
+    },
+    {
+      "start": 1648.78,
+      "end": 1738.3,
+      "match_ratio": 0.961,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 45023,
+      "url": "https://www.youtube.com/watch?v=WgNt8BsqokQ"
+    },
+    {
+      "start": 4892.74,
+      "end": 4999.58,
+      "match_ratio": 0.984,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 50590,
+      "url": "https://www.youtube.com/watch?v=DbqS5YplY0M"
+    },
+    {
+      "start": 15.98,
+      "end": 100.66,
+      "match_ratio": 0.9,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 63679,
+      "url": "https://www.youtube.com/watch?v=KkIiSmyFBmM"
+    },
+    {
+      "start": 822.72,
+      "end": 885.96,
+      "match_ratio": 0.989,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 64878,
+      "url": "https://www.youtube.com/watch?v=svRXt-c532s"
+    }
+  ]
+}
