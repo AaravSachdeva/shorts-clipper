@@ -143,14 +143,16 @@ def selector_label(name: str, skip: Iterable[str], samples: Optional[int]) -> st
 def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
              skip: Iterable[str] = (), samples: Optional[int] = None) -> List[Dict]:
     """One metrics row per (selector, episode). Metrics come from run 0; stability needs runs >= 2."""
+    from concurrent.futures import ThreadPoolExecutor
+
     from ..local.transcriber import transcribe_local
 
-    rows = []
-    for ep in episodes:
+    def one_episode(ep: Dict) -> List[Dict]:
+        rows: List[Dict] = []
         transcript = transcribe_local(ep["source"], language=ep.get("language"))
         if not all_words(transcript):
             print(f"[eval] skipping {ep['episode']}: transcript has no word timings", flush=True)
-            continue
+            return rows
         gold = ep["gold"]
         for sel in selectors:
             results = [run_selector(sel, ep, transcript, run=r, skip=skip, samples=samples) for r in range(runs)]
@@ -167,7 +169,11 @@ def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
                 "llm_seconds": sum(r["stats"].get("seconds", 0.0) for r in results),
             })
             print(f"[eval] {sel} on {ep['episode']}: P@5 {rows[-1]['p5']:.2f}", flush=True)
-    return rows
+        return rows
+
+    # Episodes run side by side (classic asks window by window); the call cache caps live calls at LLM_WORKERS.
+    with ThreadPoolExecutor(max_workers=max(1, len(episodes))) as pool:
+        return [row for rows in pool.map(one_episode, episodes) for row in rows]
 
 
 def merge_rows(old: List[Dict], new: List[Dict]) -> List[Dict]:

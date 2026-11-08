@@ -7,6 +7,7 @@ model, so a crash or a usage limit resumes where it stopped.
 import hashlib
 import json
 import os
+import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -26,6 +27,18 @@ Ask = Callable[..., Optional[Dict]]
 # change the bible, and so every prompt built on it, which empties the cache for the rest of the episode.
 ASK_ATTEMPTS = 3
 
+# Live model calls across every thread (episodes, stages) at once; created on first use from LLM_WORKERS.
+_SLOTS: Optional[threading.BoundedSemaphore] = None
+_SLOTS_LOCK = threading.Lock()
+
+
+def _slots() -> threading.BoundedSemaphore:
+    global _SLOTS
+    with _SLOTS_LOCK:
+        if _SLOTS is None:
+            _SLOTS = threading.BoundedSemaphore(max(1, config.LLM_WORKERS))
+        return _SLOTS
+
 
 def _cached(llm_fn: LLMFn, calls_dir: Path, prompt: str, schema: Optional[Dict], prompt_id: str,
             sample: int, run: int, stats: Optional[Dict]) -> Tuple[str, Path]:
@@ -41,8 +54,9 @@ def _cached(llm_fn: LLMFn, calls_dir: Path, prompt: str, schema: Optional[Dict],
         except (OSError, ValueError):
             entry = None
     if entry is None:
-        t0 = time.time()
-        response = llm_fn(prompt, schema=schema)  # an exception propagates and writes nothing
+        with _slots():
+            t0 = time.time()
+            response = llm_fn(prompt, schema=schema)  # an exception propagates and writes nothing
         entry = {"key": key, "prompt_id": prompt_id, "model": model, "sample": sample, "run": run,
                  "seconds": round(time.time() - t0, 2), "prompt": prompt, "response": response}
         path.parent.mkdir(parents=True, exist_ok=True)

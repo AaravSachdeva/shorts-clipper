@@ -154,3 +154,24 @@ def test_cached_llm_does_not_keep_non_json_answers(tmp_path):
     assert list(tmp_path.glob("*.json")) == []
     assert fn("p", schema=SCHEMA) == '{"ok": 1}' and len(prompts) == 2
     assert fn("p", schema=SCHEMA) == '{"ok": 1}' and len(prompts) == 2
+
+
+def test_live_calls_are_capped_at_llm_workers(tmp_path, monkeypatch):
+    import threading
+    import time as _time
+    monkeypatch.setattr(cache.config, "LLM_WORKERS", 2)
+    monkeypatch.setattr(cache, "_SLOTS", None)
+    lock, live, peak = threading.Lock(), [0], [0]
+
+    def slow(prompt, schema=None):
+        with lock:
+            live[0] += 1
+            peak[0] = max(peak[0], live[0])
+        _time.sleep(0.05)
+        with lock:
+            live[0] -= 1
+        return '{"ok": 1}'
+
+    ask = cache.make_ask(slow, tmp_path)
+    cache.pmap(lambda i: ask(f"p{i}", SCHEMA, "x"), range(8), workers=8)
+    assert peak[0] == 2

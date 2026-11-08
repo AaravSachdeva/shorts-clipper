@@ -165,3 +165,28 @@ def test_evaluate_skips_transcript_without_word_timings(monkeypatch, capsys, tmp
     monkeypatch.setattr(transcriber, "transcribe_local", lambda src, language=None: _transcript())
     assert ev.evaluate([_ep(tmp_path)], ["random"]) == []
     assert "no word timings" in capsys.readouterr().out
+
+
+def test_evaluate_runs_episodes_in_parallel_and_keeps_order(monkeypatch, tmp_path):
+    import threading
+    import time as _time
+    from shorts_generator.local import transcriber
+    words = [{"start": 0.0, "end": 0.4, "word": "hi"}]
+    monkeypatch.setattr(transcriber, "transcribe_local", lambda src, language=None: {
+        "duration": 60.0, "segments": [{"start": 0, "end": 60, "text": "hi", "words": words}]})
+    lock, live, peak = threading.Lock(), [0], [0]
+
+    def fake_run(name, ep, transcript, run=0, skip=(), samples=None):
+        with lock:
+            live[0] += 1
+            peak[0] = max(peak[0], live[0])
+        _time.sleep(0.05)
+        with lock:
+            live[0] -= 1
+        return {"picks": [], "candidates": [], "stats": {}}
+
+    monkeypatch.setattr(ev, "run_selector", fake_run)
+    eps = [{"episode": f"e{i}", "source": f"/v/e{i}.mp4", "gold": [_gold(0, 30)]} for i in range(4)]
+    rows = ev.evaluate(eps, ["random", "classic"])
+    assert [(r["episode"], r["selector"]) for r in rows] == [(f"e{i}", s) for i in range(4) for s in ("random", "classic")]
+    assert peak[0] > 1
