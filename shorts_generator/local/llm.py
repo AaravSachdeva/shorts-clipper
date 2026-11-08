@@ -5,6 +5,7 @@ the expected response; providers that support constrained/structured output
 use it, and the caller still validates the result either way.
 """
 import json
+import os
 import subprocess
 import tempfile
 import time
@@ -232,6 +233,7 @@ def _claude_run(prompt: str, schema: Optional[Dict] = None) -> Dict:
         proc = subprocess.run(
             args, input=prompt, cwd=_claude_cwd, capture_output=True, text=True,
             timeout=config.CLAUDE_TIMEOUT_SECONDS,
+            env={**os.environ, "MAX_THINKING_TOKENS": "0"},  # thinking off; --effort low alone still thinks
         )
     except (OSError, subprocess.TimeoutExpired) as e:
         raise RuntimeError(f"claude -p: {e}") from e
@@ -264,7 +266,7 @@ def call_claude_llm(prompt: str, schema: Optional[Dict] = None) -> str:
 # --- dispatch ---------------------------------------------------------------
 
 def model_id() -> str:
-    """Provider and model behind call_local_llm, e.g. "claude:claude-haiku-5-5"."""
+    """Provider and model behind call_local_llm, e.g. "claude:claude-haiku-5-5:effort=low:think=off"."""
     provider = (config.LLM_PROVIDER or "openai").strip().lower()
     model = {
         "openai": config.OPENAI_MODEL,
@@ -272,6 +274,8 @@ def model_id() -> str:
         "ollama": config.OLLAMA_MODEL,
         "claude": config.CLAUDE_MODEL,
     }.get(provider, "")
+    if provider == "claude":  # settings that change answers, so the cache never mixes them
+        return f"claude:{model}:effort={config.CLAUDE_EFFORT}:think=off"
     return f"{provider}:{model}"
 
 

@@ -14,8 +14,8 @@ class _Fake:
         self.stderr = stderr
         self.calls = []
 
-    def __call__(self, args, input=None, cwd=None, capture_output=None, text=None, timeout=None):
-        self.calls.append({"args": args, "input": input, "cwd": cwd})
+    def __call__(self, args, input=None, cwd=None, capture_output=None, text=None, timeout=None, env=None):
+        self.calls.append({"args": args, "input": input, "cwd": cwd, "env": env})
         return subprocess.CompletedProcess(args, self.returncode, stdout=self.stdout, stderr=self.stderr)
 
 
@@ -53,6 +53,7 @@ def test_claude_argv_is_isolated(monkeypatch):
     for flag in ("--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence"):
         assert flag in args
     assert os.path.isdir(call["cwd"]) and os.listdir(call["cwd"]) == []
+    assert call["env"]["MAX_THINKING_TOKENS"] == "0"  # --effort low alone still lets Haiku think
     assert out == '{"a": 1}'
 
 
@@ -88,7 +89,7 @@ def test_dispatch_claude(monkeypatch):
 
 
 def test_model_id_names_provider_and_model(monkeypatch):
-    assert llm.model_id() == "claude:claude-haiku-5-5"
+    assert llm.model_id() == "claude:claude-haiku-5-5:effort=low:think=off"
     monkeypatch.setattr(llm.config, "LLM_PROVIDER", "ollama")
     monkeypatch.setattr(llm.config, "OLLAMA_MODEL", "gemma4:12b")
     assert llm.model_id() == "ollama:gemma4:12b"
