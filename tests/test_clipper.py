@@ -39,3 +39,25 @@ def test_small_movement_is_not_a_cut(tmp_path):
     _write_video(path, _dark_shot(40, 40))
     shot_starts, _, _ = clipper._analyze_shots(cv2, str(path), 640, 360)
     assert shot_starts == [0]
+
+
+def test_encoder_uses_vaapi_only_when_the_probe_passes(monkeypatch):
+    from shorts_generator.local import clipper as cl
+    calls = []
+    monkeypatch.setattr(cl.config, "VIDEO_ENCODER", "auto")
+    monkeypatch.setattr(cl, "_vaapi_ok", None)
+    monkeypatch.setattr(cl.subprocess, "run", lambda *a, **k: calls.append(a) or type("P", (), {"returncode": 0})())
+    pre, video = cl._encode_args(20, ["ass='x.ass'"])
+    assert pre == ["-vaapi_device", cl.config.VAAPI_DEVICE]
+    assert video[video.index("-vf") + 1] == "ass='x.ass',format=nv12,hwupload"
+    assert video[video.index("-c:v") + 1] == "h264_vaapi"
+    cl._encode_args(18, [])
+    assert len(calls) == 1  # probed once
+
+    monkeypatch.setattr(cl, "_vaapi_ok", False)
+    pre, video = cl._encode_args(18, [])
+    assert pre == [] and "-vf" not in video and video[video.index("-c:v") + 1] == "libx264"
+
+    monkeypatch.setattr(cl.config, "VIDEO_ENCODER", "x264")
+    monkeypatch.setattr(cl, "_vaapi_ok", True)
+    assert cl._encode_args(20, [])[1][1] == "libx264"

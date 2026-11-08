@@ -29,6 +29,35 @@ def _ratio(aspect_ratio: str) -> float:
         return 9.0 / 16.0
 
 
+_vaapi_ok: Optional[bool] = None
+
+
+def _use_vaapi() -> bool:
+    """True when ffmpeg can encode h264_vaapi on VAAPI_DEVICE; probed once with a tiny test encode."""
+    global _vaapi_ok
+    if config.VIDEO_ENCODER == "x264":
+        return False
+    if _vaapi_ok is None:
+        probe = ["ffmpeg", "-v", "error", "-vaapi_device", config.VAAPI_DEVICE,
+                 "-f", "lavfi", "-i", "testsrc=duration=0.2:size=320x240",
+                 "-vf", "format=nv12,hwupload", "-c:v", "h264_vaapi", "-f", "null", "-"]
+        try:
+            _vaapi_ok = subprocess.run(probe, capture_output=True, timeout=30).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            _vaapi_ok = False
+        print(f"[clip/local] video encoder: {'h264_vaapi (GPU)' if _vaapi_ok else 'libx264 (CPU)'}", flush=True)
+    return _vaapi_ok
+
+
+def _encode_args(quality: int, vf: List[str]) -> (List[str], List[str]):
+    """(global args that go before the inputs, filter + codec args) for an H.264 encode at ~CRF `quality`."""
+    if _use_vaapi():
+        return (["-vaapi_device", config.VAAPI_DEVICE],
+                ["-vf", ",".join(vf + ["format=nv12", "hwupload"]), "-c:v", "h264_vaapi", "-qp", str(quality)])
+    return [], (["-vf", ",".join(vf)] if vf else []) + [
+        "-c:v", "libx264", "-preset", "fast", "-crf", str(quality), "-pix_fmt", "yuv420p"]
+
+
 def _output_size(aspect_ratio: str) -> (int, int):
     r = _ratio(aspect_ratio)
     if abs(r - config.OUTPUT_WIDTH / config.OUTPUT_HEIGHT) < 1e-3:
@@ -45,12 +74,13 @@ def _cut_subclip(source_path: str, start: float, end: float, out_path: str) -> s
     instead of decoding the whole source from 0. With re-encoding this is
     frame-accurate in modern ffmpeg.
     """
+    pre, video = _encode_args(18, [])
     cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
+        "ffmpeg", "-y", "-loglevel", "error", *pre,
         "-ss", f"{start:.3f}",
         "-i", source_path,
         "-t", f"{end - start:.3f}",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+        *video,
         "-c:a", "aac", "-b:a", "192k",
         out_path,
     ]
@@ -264,18 +294,15 @@ def _render_short(in_path: str, out_path: str, aspect_ratio: str, ass_path: Opti
         vf.append(f"ass='{_escape_filter_path(ass_path)}'")
     af = _loudnorm_filter(in_path)
 
+    pre, video = _encode_args(20, vf)
     cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
+        "ffmpeg", "-y", "-loglevel", "error", *pre,
         "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{out_w}x{out_h}", "-r", f"{fps}",
         "-i", "-",
         "-i", in_path,
         "-map", "0:v:0", "-map", "1:a:0?",
-    ]
-    if vf:
-        cmd += ["-vf", ",".join(vf)]
-    cmd += [
+        *video,
         "-af", af, "-ar", "48000",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "160k",
         "-movflags", "+faststart", "-shortest",
         out_path,

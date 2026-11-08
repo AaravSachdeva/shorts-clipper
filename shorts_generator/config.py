@@ -76,6 +76,9 @@ CROP_BOTTOM_PCT = float(os.getenv("CROP_BOTTOM_PCT", "0"))
 OUTPUT_WIDTH = int(os.getenv("OUTPUT_WIDTH", "1080"))
 OUTPUT_HEIGHT = int(os.getenv("OUTPUT_HEIGHT", "1920"))
 TARGET_LUFS = float(os.getenv("TARGET_LUFS", "-14"))
+# "auto" encodes H.264 on the GPU (VAAPI) when a test encode works there, else on the CPU; "x264" forces the CPU.
+VIDEO_ENCODER = os.getenv("VIDEO_ENCODER", "auto").strip().lower()
+VAAPI_DEVICE = os.getenv("VAAPI_DEVICE", "/dev/dri/renderD128")
 
 # VAD (Voice Activity Detection) settings for faster-whisper
 # Default threshold is 0.5; lower = more sensitive, higher = less sensitive
