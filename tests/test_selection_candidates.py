@@ -141,3 +141,17 @@ def test_generate_candidates_adds_loudness_and_bible_spans():
     out = cd.generate_candidates(transcript, bible, db, ask)
     origins = sorted(o for c in out for o in c["origin"])
     assert origins == ["loudness", "payoff"]
+
+
+def test_window_prompt_uses_the_target_length():
+    seen = []
+
+    def ask(prompt, schema, prompt_id, sample=0):
+        seen.append(prompt)
+        return {"candidates": []}
+
+    cd.window_candidates(_window_transcript(), {}, ask, target_length="long")
+    assert "45-90 seconds" in seen[0] and "150 seconds" in seen[0]
+    seen.clear()
+    cd.window_candidates(_window_transcript(), {}, ask)
+    assert "20-60 seconds" in seen[0] and "90 seconds" in seen[0]

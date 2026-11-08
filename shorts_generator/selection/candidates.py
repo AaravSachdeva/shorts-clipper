@@ -62,9 +62,10 @@ def signal_spans(words: List[Dict], times: List[Tuple[float, str, float]], durat
     return out
 
 
-def window_candidates(transcript: Dict, bible: Dict, ask: Ask) -> List[Dict]:
+def window_candidates(transcript: Dict, bible: Dict, ask: Ask, target_length: Optional[str] = None) -> List[Dict]:
     """Ask for up to 8 moments per 5-minute window, twice per window, and keep the answers that fit it."""
     duration = float(transcript.get("duration") or 0)
+    min_len, max_len, hard_max = TARGET_LENGTHS.get(target_length or config.TARGET_LENGTH, TARGET_LENGTHS["medium"])
     windows = chunk_transcript(transcript, size=WINDOW_SECONDS)
     template, prompt_id = load_prompt("window")
     prefix = judge_prefix(bible)
@@ -74,7 +75,7 @@ def window_candidates(transcript: Dict, bible: Dict, ask: Ask) -> List[Dict]:
         i, w, sample = job
         prompt = prefix + "\n\n" + template.format(
             virality_criteria=VIRALITY_CRITERIA, platform_signals=PLATFORM_SIGNALS,
-            transcript=build_transcript_text(w))
+            min_len=min_len, max_len=max_len, hard_max=hard_max, transcript=build_transcript_text(w))
         return ask(prompt, WINDOW_SCHEMA, prompt_id, sample)
 
     out = []
@@ -124,7 +125,7 @@ def generate_candidates(transcript: Dict, bible: Dict, db: List[float], ask: Ask
     """LLM window picks + loudness peaks + the bible's payoffs and running jokes, merged."""
     words = all_words(transcript)
     duration = float(transcript.get("duration") or 0)
-    llm = window_candidates(transcript, bible, ask)
+    llm = window_candidates(transcript, bible, ask, target_length)
     loud = signal_spans(words, [(float(t), "loudness", d) for t, d in loud_peaks(db)], duration)
     bible_times = [(float(p["payoff_t"]), "payoff", 0.0) for p in (bible or {}).get("setups_payoffs") or []
                    if isinstance(p, dict) and isinstance(p.get("payoff_t"), (int, float))]

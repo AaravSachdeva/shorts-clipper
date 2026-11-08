@@ -4,7 +4,7 @@ Find the moments in this part of the episode that would make strong short vertic
 Rules:
 - start: the time of the clip's first sentence; the clip opens on its hook
 - end: right after the payoff (punchline, conclusion, reaction); never mid-sentence or mid-thought
-- most clips are 20-60 seconds long
+- aim for {min_len}-{max_len} seconds; go up to {hard_max} seconds only when a story needs the full arc to land
 - never pick ads, sponsor reads, intros, outros, or appeals to like, subscribe or support the show
 - kind: the one virality signal above that fits best
 - why: one sentence on why it would perform
