@@ -1,0 +1,80 @@
+{
+  "episode": "source_RBZTLptAMao",
+  "source": "/home/aarav/shorts-clipper/output/source_RBZTLptAMao.mp4",
+  "language": "en",
+  "split": "tune",
+  "gold": [
+    {
+      "start": 2594.82,
+      "end": 2672.54,
+      "match_ratio": 0.86,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 51708,
+      "url": "https://www.youtube.com/watch?v=37ziD3T6ZLM"
+    },
+    {
+      "start": 1322.32,
+      "end": 1381.62,
+      "match_ratio": 1.0,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 35749,
+      "url": "https://www.youtube.com/watch?v=5why7k8c2Mg"
+    },
+    {
+      "start": 1825.52,
+      "end": 1858.72,
+      "match_ratio": 1.0,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 68258,
+      "url": "https://www.youtube.com/watch?v=T7vtLCw6TJw"
+    },
+    {
+      "start": 1659.8,
+      "end": 1674.88,
+      "match_ratio": 0.868,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 57105,
+      "url": "https://www.youtube.com/watch?v=fjT_dZ8KdfY"
+    },
+    {
+      "start": 230.6,
+      "end": 295.64,
+      "match_ratio": 0.994,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 39215,
+      "url": "https://www.youtube.com/watch?v=2BK2_a56vhQ"
+    },
+    {
+      "start": 942.9,
+      "end": 999.18,
+      "match_ratio": 0.79,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 37548,
+      "url": "https://www.youtube.com/watch?v=yCcgpzXgSDw"
+    },
+    {
+      "start": 2594.82,
+      "end": 2677.04,
+      "match_ratio": 0.944,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 164905,
+      "url": "https://www.youtube.com/watch?v=6co6gnAcBCU"
+    },
+    {
+      "start": 4320.28,
+      "end": 4398.62,
+      "match_ratio": 0.973,
+      "rating": 4,
+      "origin": "official_short",
+      "views": 71788,
+      "url": "https://www.youtube.com/watch?v=AIvZGMltg-A"
+    }
+  ]
+}
