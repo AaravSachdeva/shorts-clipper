@@ -176,7 +176,7 @@ def test_evaluate_runs_episodes_in_parallel_and_keeps_order(monkeypatch, tmp_pat
         "duration": 60.0, "segments": [{"start": 0, "end": 60, "text": "hi", "words": words}]})
     lock, live, peak = threading.Lock(), [0], [0]
 
-    def fake_run(name, ep, transcript, run=0, skip=(), samples=None):
+    def fake_run(name, ep, transcript, run=0, skip=(), samples=None, until=None):
         with lock:
             live[0] += 1
             peak[0] = max(peak[0], live[0])
@@ -199,3 +199,42 @@ def test_selector_label_names_a_non_default_target_length(monkeypatch):
     monkeypatch.setattr(ev.config, "TARGET_LENGTH", "long")
     assert ev.selector_label("classic", [], None) == "classic@long"
     assert ev.selector_label("deep", [], 3) == "deep[samples=3]@long"
+
+
+def test_load_episodes_filters_by_name(tmp_path):
+    for name in ("a", "b", "c"):
+        d = tmp_path / name
+        d.mkdir()
+        (d / "gold.json").write_text(json.dumps({"episode": name, "source": f"{name}.mp4", "split": "tune",
+                                                 "gold": [_gold(0, 30)]}))
+    assert [e["episode"] for e in ev.load_episodes(tmp_path, "tune", names=["c", "a"])] == ["a", "c"]
+    assert [e["episode"] for e in ev.load_episodes(tmp_path, "tune")] == ["a", "b", "c"]
+
+
+def test_until_candidates_is_named_in_the_label_and_passed_to_deep(monkeypatch, tmp_path):
+    monkeypatch.setattr(ev.config, "TARGET_LENGTH", "long")
+    assert ev.selector_label("deep", [], None, until="candidates") == "deep[until=candidates]@long"
+    seen = {}
+
+    def fake_deep(transcript, source_path, num_clips, **k):
+        seen.update(k)
+        return {"highlights": [], "candidates": []}
+
+    monkeypatch.setattr(ev, "run_deep", fake_deep)
+    ev.run_selector("deep", _ep(tmp_path), _transcript(), until="candidates")
+    assert seen["until"] == "candidates"
+
+
+def test_rows_and_report_carry_median_lengths(monkeypatch, tmp_path):
+    from shorts_generator.local import transcriber
+    words = [{"start": 0.0, "end": 0.4, "word": "hi"}]
+    monkeypatch.setattr(transcriber, "transcribe_local", lambda src, language=None: {
+        "duration": 600.0, "segments": [{"start": 0, "end": 600, "text": "hi", "words": words}]})
+    spans = [{"start_time": 0.0, "end_time": 40.0}, {"start_time": 100.0, "end_time": 160.0},
+             {"start_time": 200.0, "end_time": 300.0}]
+    monkeypatch.setattr(ev, "run_selector", lambda name, ep, transcript, **k: {
+        "picks": spans[:2], "candidates": spans, "stats": {}})
+    [row] = ev.evaluate([_ep(tmp_path)], ["classic"])
+    assert row["pick_len"] == 50.0 and row["cand_len"] == 60.0
+    md = ev.report([row])
+    assert "median pick length (s)" in md and "| 50.0 |" in md

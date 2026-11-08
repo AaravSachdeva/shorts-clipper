@@ -18,8 +18,12 @@ from .tournament import blend, mmr, play, rank_scores, text_fields
 
 def run_deep(transcript: Dict, source_path: str, num_clips: int, llm_fn: Optional[Callable] = None,
              skip: Iterable[str] = (), samples: Optional[int] = None, run: int = 0,
-             target_length: Optional[str] = None, stats: Optional[Dict] = None) -> Dict:
-    """{"highlights": picks as highlight dicts, "candidates": every merged candidate, "bible": the bible}."""
+             target_length: Optional[str] = None, stats: Optional[Dict] = None,
+             until: Optional[str] = None) -> Dict:
+    """{"highlights": picks as highlight dicts, "candidates": every merged candidate, "bible": the bible}.
+
+    until="candidates" stops after candidate generation (no picks): a cheap check of candidate recall.
+    """
     if llm_fn is None:
         from ..local.llm import call_local_llm
         llm_fn = call_local_llm
@@ -30,6 +34,8 @@ def run_deep(transcript: Dict, source_path: str, num_clips: int, llm_fn: Optiona
     bible = {} if "bible" in skip else build_bible(transcript, ask)
     db = loudness_per_second(source_path, work / "loudness.json")
     cands = generate_candidates(transcript, bible, db, ask, target_length)
+    if until == "candidates":
+        return {"highlights": [], "candidates": cands, "bible": bible}
     scored = score_candidates(transcript, bible, cands, ask, samples or config.SCORE_SAMPLES)
     top = sorted(scored, key=lambda c: c["combined"], reverse=True)[: config.TOURNAMENT_MAX]
     comb = [c["combined"] for c in top]

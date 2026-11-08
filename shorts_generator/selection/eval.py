@@ -10,6 +10,7 @@ import itertools
 import json
 import math
 import random
+import statistics
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -88,12 +89,15 @@ def random_spans(duration: float, n: int = 10, seed: str = "") -> List[Dict]:
     return out
 
 
-def load_episodes(eval_dir: Path, split: str) -> List[Dict]:
-    """Labelled episodes for a split (tune, test or all); episodes with no gold are skipped."""
+def load_episodes(eval_dir: Path, split: str, names: Optional[Iterable[str]] = None) -> List[Dict]:
+    """Labelled episodes for a split (tune, test or all), optionally only the named ones; no-gold ones are skipped."""
+    names = set(names) if names else None
     out = []
     for path in sorted(Path(eval_dir).glob("*/gold.json")):
         ep = json.loads(path.read_text(encoding="utf-8"))
         if split != "all" and ep.get("split") != split:
+            continue
+        if names is not None and ep.get("episode") not in names:
             continue
         if not ep.get("gold"):
             print(f"[eval] skipping {ep.get('episode') or path.parent.name}: no gold clips", flush=True)
@@ -109,7 +113,7 @@ def _work(ep: Dict) -> Path:
 
 
 def run_selector(name: str, ep: Dict, transcript: Dict, run: int = 0,
-                 skip: Iterable[str] = (), samples: Optional[int] = None) -> Dict:
+                 skip: Iterable[str] = (), samples: Optional[int] = None, until: Optional[str] = None) -> Dict:
     """{"picks": top-10 spans, "candidates": every span the selector considered, "stats": LLM call stats}."""
     stats: Dict = {}
     duration = float(transcript.get("duration") or 0)
@@ -127,23 +131,27 @@ def run_selector(name: str, ep: Dict, transcript: Dict, run: int = 0,
         return {"picks": highlights[:TOP_N], "candidates": highlights, "stats": stats}
     if name == "deep":
         res = run_deep(transcript, ep["source"], TOP_N, llm_fn=call_local_llm, skip=skip, samples=samples,
-                       run=run, stats=stats)
+                       run=run, stats=stats, until=until)
         return {"picks": res["highlights"], "candidates": res["candidates"], "stats": stats}
     raise ValueError(f"unknown selector {name!r}")
 
 
-def selector_label(name: str, skip: Iterable[str], samples: Optional[int]) -> str:
+def selector_label(name: str, skip: Iterable[str], samples: Optional[int], until: Optional[str] = None) -> str:
     """Report row name, e.g. deep[-bible,samples=3]@long; only deep takes options, and the target clip
     length shows when it is not the default, so rows at different lengths never replace each other."""
     length = "" if config.TARGET_LENGTH == "medium" else f"@{config.TARGET_LENGTH}"
     if name != "deep":
         return name + length
-    parts = [f"-{s}" for s in skip] + ([f"samples={samples}"] if samples else [])
+    parts = [f"-{s}" for s in skip] + ([f"samples={samples}"] if samples else []) + ([f"until={until}"] if until else [])
     return (f"deep[{','.join(parts)}]" if parts else "deep") + length
 
 
+def _median_len(spans: Sequence) -> Optional[float]:
+    return statistics.median(e - s for s, e in map(_span, spans)) if spans else None
+
+
 def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
-             skip: Iterable[str] = (), samples: Optional[int] = None) -> List[Dict]:
+             skip: Iterable[str] = (), samples: Optional[int] = None, until: Optional[str] = None) -> List[Dict]:
     """One metrics row per (selector, episode). Metrics come from run 0; stability needs runs >= 2."""
     from concurrent.futures import ThreadPoolExecutor
 
@@ -157,11 +165,13 @@ def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,
             return rows
         gold = ep["gold"]
         for sel in selectors:
-            results = [run_selector(sel, ep, transcript, run=r, skip=skip, samples=samples) for r in range(runs)]
+            results = [run_selector(sel, ep, transcript, run=r, skip=skip, samples=samples, until=until)
+                       for r in range(runs)]
             first = results[0]
             pairs = list(itertools.combinations([r["picks"] for r in results], 2))
             rows.append({
-                "selector": selector_label(sel, skip, samples), "episode": ep["episode"],
+                "selector": selector_label(sel, skip, samples, until), "episode": ep["episode"],
+                "pick_len": _median_len(first["picks"]), "cand_len": _median_len(first["candidates"]),
                 "recall": recall(first["candidates"], gold),
                 "p5": precision_at(first["picks"], gold, 5),
                 "ndcg10": ndcg_at(first["picks"], gold, 10),
@@ -198,14 +208,16 @@ def report(rows: List[Dict]) -> str:
     n_eps = len({r["episode"] for r in rows})
     out = ["# Clip selector eval", "",
            f"Episodes: {n_eps} (conclusions about a stage need at least {MIN_EPISODES_FOR_CONCLUSIONS})", "",
-           "| selector | episodes | Recall@candidates | P@5 | NDCG@10 | boundary error (s) | stability | LLM calls | LLM hours |",
-           "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+           "| selector | episodes | Recall@candidates | P@5 | NDCG@10 | boundary error (s) | stability "
+           "| median pick length (s) | median candidate length (s) | LLM calls | LLM hours |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for sel in dict.fromkeys(r["selector"] for r in rows):
         rs = [r for r in rows if r["selector"] == sel]
         out.append(
             f"| {sel} | {len(rs)} | {_fmt(_mean(r['recall'] for r in rs))} | {_fmt(_mean(r['p5'] for r in rs))} "
             f"| {_fmt(_mean(r['ndcg10'] for r in rs))} | {_fmt(_mean(r['boundary'] for r in rs), 1)} "
-            f"| {_fmt(_mean(r['stability'] for r in rs))} | {sum(r['calls'] for r in rs)} "
+            f"| {_fmt(_mean(r['stability'] for r in rs))} | {_fmt(_mean(r.get('pick_len') for r in rs), 1)} "
+            f"| {_fmt(_mean(r.get('cand_len') for r in rs), 1)} | {sum(r['calls'] for r in rs)} "
             f"| {_fmt(sum(r['llm_seconds'] for r in rs) / 3600)} |"
         )
     out += ["", "## Per episode", "",
@@ -224,17 +236,25 @@ def main() -> None:
     ap.add_argument("--runs", type=int, default=1, help=">= 2 also measures stability (each run re-asks the model)")
     ap.add_argument("--skip", default="", help="deep stages to skip, e.g. bible,tournament")
     ap.add_argument("--samples", type=int, default=None, help="answers per deep scoring question")
+    ap.add_argument("--episodes", default="", help="only these episode names, e.g. source_abc,source_def")
+    ap.add_argument("--stop-after", choices=["candidates"], default=None,
+                    help="deep only: stop after candidate generation (checks Recall@candidates cheaply)")
     ap.add_argument("--eval-dir", default="eval")
     ap.add_argument("--out", default="eval/report.md")
     args = ap.parse_args()
 
-    episodes = load_episodes(Path(args.eval_dir), args.split)
+    names = [s.strip() for s in args.episodes.split(",") if s.strip()]
+    episodes = load_episodes(Path(args.eval_dir), args.split, names or None)
+    missing = set(names) - {e["episode"] for e in episodes}
+    if missing:
+        raise SystemExit(f"[eval] no labelled {args.split} episode named {', '.join(sorted(missing))}")
     selectors = [s.strip() for s in args.selectors.split(",") if s.strip()]
     skip = [s.strip() for s in args.skip.split(",") if s.strip()]
     # Rows from earlier runs are kept, so deep and its ablations (deep[-bible], ...) share one report.
     rows_path = Path(args.out).with_name("rows.json")
     old = json.loads(rows_path.read_text(encoding="utf-8")) if rows_path.exists() else []
-    rows = merge_rows(old, evaluate(episodes, selectors, runs=args.runs, skip=skip, samples=args.samples))
+    rows = merge_rows(old, evaluate(episodes, selectors, runs=args.runs, skip=skip, samples=args.samples,
+                                    until=args.stop_after))
     rows_path.parent.mkdir(parents=True, exist_ok=True)
     rows_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
     md = report(rows) if rows else "# Clip selector eval\n\nEpisodes: 0 (no labelled episodes in this split)\n"

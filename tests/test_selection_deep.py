@@ -161,3 +161,17 @@ def test_deep_selector_refuses_api_mode(monkeypatch, capsys):
     monkeypatch.setattr(shorts_generator, "generate_shorts", boom)
     assert main.main() == 2
     assert "--mode local" in capsys.readouterr().err
+
+
+def test_run_deep_until_candidates_asks_no_scoring_or_pairs(deep_env):
+    seen = []
+
+    class _Tracking(_FakeLLM):
+        def __call__(self, prompt, schema=None):
+            seen.append(schema)
+            return super().__call__(prompt, schema)
+
+    out = selection.run_deep(_transcript(), str(deep_env / "ep.mp4"), 3, llm_fn=_Tracking(), until="candidates")
+    assert out["highlights"] == [] and out["candidates"]
+    allowed = (bb.MAP_SCHEMA, bb.REDUCE_SCHEMA, cd.WINDOW_SCHEMA)
+    assert seen and all(any(s is a for a in allowed) for s in seen)
