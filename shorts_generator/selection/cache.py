@@ -59,9 +59,18 @@ def _cached(llm_fn: LLMFn, calls_dir: Path, prompt: str, schema: Optional[Dict],
 
 def cached_llm(llm_fn: LLMFn, calls_dir: Path, prompt_id: str, run: int = 0,
                stats: Optional[Dict] = None) -> LLMFn:
-    """A drop-in llm_fn(prompt, schema=None) -> str that goes through the cache."""
+    """A drop-in llm_fn(prompt, schema=None) -> str that goes through the cache.
+
+    The text is returned raw for the caller to validate; only answers that parse as JSON are kept,
+    so the caller's own retries reach the model instead of replaying a broken answer.
+    """
     def fn(prompt: str, schema: Optional[Dict] = None) -> str:
-        return _cached(llm_fn, calls_dir, prompt, schema, prompt_id, 0, run, stats)[0]
+        text, path = _cached(llm_fn, calls_dir, prompt, schema, prompt_id, 0, run, stats)
+        try:
+            _parse_json_loose(text)
+        except ValueError:
+            path.unlink(missing_ok=True)
+        return text
     return fn
 
 

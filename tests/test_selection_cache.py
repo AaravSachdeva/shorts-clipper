@@ -104,10 +104,10 @@ def test_stats_count_hits_and_misses(tmp_path):
 
 
 def test_cached_llm_returns_raw_text(tmp_path):
-    llm = _LLM("raw text")
+    llm = _LLM('```json\n{"x": "raw"}\n```')
     fn = cache.cached_llm(llm, tmp_path, "classic")
-    assert fn("p", schema=SCHEMA) == "raw text"
-    assert fn("p", schema=SCHEMA) == "raw text"
+    assert fn("p", schema=SCHEMA) == '```json\n{"x": "raw"}\n```'
+    assert fn("p", schema=SCHEMA) == '```json\n{"x": "raw"}\n```'
     assert len(llm.prompts) == 1
 
 
@@ -139,3 +139,18 @@ def test_parallel_identical_asks_do_not_collide(tmp_path):
     out = cache.pmap(lambda _: ask("same", SCHEMA, "x"), range(8), workers=8)
     assert out == [{"ok": True}] * 8
     assert len(list(tmp_path.glob("*.json"))) == 1 and not list(tmp_path.glob("*.tmp"))
+
+
+def test_cached_llm_does_not_keep_non_json_answers(tmp_path):
+    answers = iter(["", '{"ok": 1}'])
+    prompts = []
+
+    def llm(prompt, schema=None):
+        prompts.append(prompt)
+        return next(answers)
+
+    fn = cache.cached_llm(llm, tmp_path, "classic")
+    assert fn("p", schema=SCHEMA) == ""
+    assert list(tmp_path.glob("*.json")) == []
+    assert fn("p", schema=SCHEMA) == '{"ok": 1}' and len(prompts) == 2
+    assert fn("p", schema=SCHEMA) == '{"ok": 1}' and len(prompts) == 2
