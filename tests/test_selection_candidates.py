@@ -162,3 +162,8 @@ def test_window_prompt_uses_the_target_length():
     seen.clear()
     cd.window_candidates(_window_transcript(), {}, ask)
     assert "20-60 seconds" in seen[0] and "90 seconds" in seen[0]
+
+
+def test_merge_keeps_spans_apart_when_their_union_would_be_too_long():
+    out = cd.merge([_c(0, 140), _c(30, 170)], [], "long")  # IoU 0.65, union 170 s > 150 s hard max
+    assert [(c["start_time"], c["end_time"]) for c in out] == [(0, 140), (30, 170)]

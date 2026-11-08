@@ -111,7 +111,8 @@ def merge(cands: List[Dict], words: List[Dict], target_length: Optional[str] = N
         snapped.append({**c, **s} if s else {**c, "start_time": start, "end_time": end})
     merged: List[Dict] = []
     for c in sorted(snapped, key=lambda x: (x["start_time"], x["end_time"])):
-        m = next((m for m in merged if iou(m, c) > MERGE_IOU), None)
+        m = next((m for m in merged if iou(m, c) > MERGE_IOU  # a union past hard_max would drop both spans
+                  and max(m["end_time"], c["end_time"]) - min(m["start_time"], c["start_time"]) <= hard_max), None)
         if m is None:
             merged.append({**c, "origin": list(c.get("origin") or []), "window_ids": list(c.get("window_ids") or [])})
             continue
