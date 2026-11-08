@@ -1,0 +1,80 @@
+[
+  {
+    "selector": "deep[until=candidates]@long",
+    "episode": "source_J_W5X-tlmU8",
+    "pick_len": null,
+    "cand_len": 47.87499999999977,
+    "recall": 0.6666666666666666,
+    "p5": 0.0,
+    "ndcg10": 0.0,
+    "boundary": null,
+    "stability": null,
+    "calls": 55,
+    "llm_seconds": 542.1199999999999
+  },
+  {
+    "selector": "deep[until=candidates]@long",
+    "episode": "source_RBZTLptAMao",
+    "pick_len": null,
+    "cand_len": 50.48000000000002,
+    "recall": 0.625,
+    "p5": 0.0,
+    "ndcg10": 0.0,
+    "boundary": null,
+    "stability": null,
+    "calls": 67,
+    "llm_seconds": 646.01
+  },
+  {
+    "selector": "random@long",
+    "episode": "source_J_W5X-tlmU8",
+    "pick_len": 77.03500000000031,
+    "cand_len": 77.03500000000031,
+    "recall": 0.16666666666666666,
+    "p5": 0.2,
+    "ndcg10": 0.11706259313796354,
+    "boundary": 14.934999999999945,
+    "stability": null,
+    "calls": 0,
+    "llm_seconds": 0.0
+  },
+  {
+    "selector": "signal@long",
+    "episode": "source_J_W5X-tlmU8",
+    "pick_len": 44.61999999999989,
+    "cand_len": 44.61999999999989,
+    "recall": 0.0,
+    "p5": 0.0,
+    "ndcg10": 0.0,
+    "boundary": null,
+    "stability": null,
+    "calls": 0,
+    "llm_seconds": 0.0
+  },
+  {
+    "selector": "deep@long",
+    "episode": "source_J_W5X-tlmU8",
+    "pick_len": 76.88,
+    "cand_len": 47.87499999999977,
+    "recall": 0.6666666666666666,
+    "p5": 0.2,
+    "ndcg10": 0.13032376591037062,
+    "boundary": 4.494999999999891,
+    "stability": null,
+    "calls": 887,
+    "llm_seconds": 3871.0099999999975
+  },
+  {
+    "selector": "classic@long",
+    "episode": "source_J_W5X-tlmU8",
+    "pick_len": 45.1099999999999,
+    "cand_len": 45.45000000000027,
+    "recall": 0.6666666666666666,
+    "p5": 0.0,
+    "ndcg10": 0.0,
+    "boundary": null,
+    "stability": null,
+    "calls": 20,
+    "llm_seconds": 296.5800000000001
+  }
+]
