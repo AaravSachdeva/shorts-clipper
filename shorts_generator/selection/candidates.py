@@ -46,8 +46,9 @@ def iou(a, b) -> float:
 
 
 def signal_spans(words: List[Dict], times: List[Tuple[float, str, float]], duration: float,
-                 per_hour: int = SIGNALS_PER_HOUR, limit: Optional[int] = None) -> List[Dict]:
-    """A 20-60 s sentence-snapped span around each (time, origin, strength).
+                 per_hour: int = SIGNALS_PER_HOUR, limit: Optional[int] = None,
+                 half_width: float = 20.0) -> List[Dict]:
+    """A sentence-snapped span of about +-half_width seconds around each (time, origin, strength).
 
     Keeps the strongest `per_hour` per hour of audio, or the strongest `limit` when given.
     """
@@ -56,7 +57,7 @@ def signal_spans(words: List[Dict], times: List[Tuple[float, str, float]], durat
     for t, origin, strength in sorted(times, key=lambda x: x[2], reverse=True):
         if len(out) >= cap:
             break
-        snapped = snap_clip(words, t - 20, t + 20, window=10.0)
+        snapped = snap_clip(words, t - half_width, t + half_width, window=10.0)
         if snapped:
             out.append({**snapped, "origin": [origin], "strength": strength})
     return out

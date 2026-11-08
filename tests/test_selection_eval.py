@@ -238,3 +238,18 @@ def test_rows_and_report_carry_median_lengths(monkeypatch, tmp_path):
     assert row["pick_len"] == 50.0 and row["cand_len"] == 60.0
     md = ev.report([row])
     assert "median pick length (s)" in md and "| 50.0 |" in md
+
+
+def test_baselines_use_the_target_length(tmp_path, monkeypatch):
+    monkeypatch.setattr(ev.config, "TARGET_LENGTH", "long")
+    monkeypatch.setattr(ev.config, "WORK_DIR", str(tmp_path / "work"))
+    words = [{"start": i * 0.5, "end": i * 0.5 + 0.4, "word": f"w{i}" + ("." if i % 8 == 7 else "")}
+             for i in range(1200)]
+    transcript = {"duration": 600.0, "segments": [{"start": 0, "end": 600, "text": "x", "words": words}]}
+    for p in ev.run_selector("random", _ep(tmp_path), transcript)["picks"]:
+        assert 45 <= p["end_time"] - p["start_time"] <= 90
+    db = [-30.0] * 600
+    db[300] = -10.0
+    monkeypatch.setattr(ev, "loudness_per_second", lambda src, cache: db)
+    [span] = ev.run_selector("signal", _ep(tmp_path), transcript)["picks"]
+    assert span["end_time"] - span["start_time"] >= 40  # +-22.5 s, then snapped to sentence edges

@@ -16,7 +16,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from .. import config
 from ..boundaries import all_words
-from ..highlights import get_highlights
+from ..highlights import TARGET_LENGTHS, get_highlights
 from ..local.llm import call_local_llm
 from . import run_deep
 from .cache import cached_llm
@@ -78,12 +78,13 @@ def jaccard_top(a: Sequence, b: Sequence, k: int = 5) -> float:
     return m / (len(a) + len(b) - m)
 
 
-def random_spans(duration: float, n: int = 10, seed: str = "") -> List[Dict]:
-    """Baseline: n random spans of 20-60 s inside the episode."""
+def random_spans(duration: float, n: int = 10, seed: str = "",
+                 length_range: Tuple[float, float] = (20.0, 60.0)) -> List[Dict]:
+    """Baseline: n random spans inside the episode, each 20-60 s long unless length_range says otherwise."""
     rng = random.Random(seed)
     out = []
     for _ in range(n):
-        length = min(rng.uniform(20, 60), duration)
+        length = min(rng.uniform(*length_range), duration)
         start = rng.uniform(0, max(0.0, duration - length))
         out.append({"start_time": round(start, 2), "end_time": round(start + length, 2)})
     return out
@@ -117,12 +118,14 @@ def run_selector(name: str, ep: Dict, transcript: Dict, run: int = 0,
     """{"picks": top-10 spans, "candidates": every span the selector considered, "stats": LLM call stats}."""
     stats: Dict = {}
     duration = float(transcript.get("duration") or 0)
+    min_len, max_len, _ = TARGET_LENGTHS.get(config.TARGET_LENGTH, TARGET_LENGTHS["medium"])
     if name == "random":
-        picks = random_spans(duration, n=TOP_N, seed=f"{ep['episode']}:{run}")
+        picks = random_spans(duration, n=TOP_N, seed=f"{ep['episode']}:{run}", length_range=(min_len, max_len))
         return {"picks": picks, "candidates": picks, "stats": stats}
     if name == "signal":
         db = loudness_per_second(ep["source"], _work(ep) / "loudness.json")
-        spans = signal_spans(all_words(transcript), [(float(t), "loudness", d) for t, d in loud_peaks(db)], duration)
+        spans = signal_spans(all_words(transcript), [(float(t), "loudness", d) for t, d in loud_peaks(db)], duration,
+                             half_width=max(20.0, min_len / 2))
         spans.sort(key=lambda s: s["strength"], reverse=True)
         return {"picks": spans[:TOP_N], "candidates": spans, "stats": stats}
     if name == "classic":
