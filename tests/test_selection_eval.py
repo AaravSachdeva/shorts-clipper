@@ -190,3 +190,12 @@ def test_evaluate_runs_episodes_in_parallel_and_keeps_order(monkeypatch, tmp_pat
     rows = ev.evaluate(eps, ["random", "classic"])
     assert [(r["episode"], r["selector"]) for r in rows] == [(f"e{i}", s) for i in range(4) for s in ("random", "classic")]
     assert peak[0] > 1
+
+
+def test_selector_label_names_a_non_default_target_length(monkeypatch):
+    from shorts_generator.selection import eval as ev
+    monkeypatch.setattr(ev.config, "TARGET_LENGTH", "medium")
+    assert ev.selector_label("deep", ["bible"], None) == "deep[-bible]"
+    monkeypatch.setattr(ev.config, "TARGET_LENGTH", "long")
+    assert ev.selector_label("classic", [], None) == "classic@long"
+    assert ev.selector_label("deep", [], 3) == "deep[samples=3]@long"

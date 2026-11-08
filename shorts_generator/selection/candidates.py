@@ -97,11 +97,17 @@ def window_candidates(transcript: Dict, bible: Dict, ask: Ask, target_length: Op
 
 
 def merge(cands: List[Dict], words: List[Dict], target_length: Optional[str] = None) -> List[Dict]:
-    """Snap to sentences, merge spans overlapping at IoU > 0.6 into their union, keep the target lengths."""
+    """Widen spans to the target minimum, snap to sentences, merge spans overlapping at IoU > 0.6 into
+    their union, keep the target lengths."""
+    min_len, _, hard_max = TARGET_LENGTHS.get(target_length or config.TARGET_LENGTH, TARGET_LENGTHS["medium"])
     snapped = []
     for c in cands:
-        s = snap_clip(words, float(c["start_time"]), float(c["end_time"])) if words else None
-        snapped.append({**c, **s} if s else dict(c))
+        start, end = float(c["start_time"]), float(c["end_time"])
+        if end - start < min_len:  # models answer shorter than asked (Haiku: median 23 s when asked for 20-60)
+            mid = (start + end) / 2
+            start, end = max(0.0, mid - min_len / 2), max(0.0, mid - min_len / 2) + min_len
+        s = snap_clip(words, start, end) if words else None
+        snapped.append({**c, **s} if s else {**c, "start_time": start, "end_time": end})
     merged: List[Dict] = []
     for c in sorted(snapped, key=lambda x: (x["start_time"], x["end_time"])):
         m = next((m for m in merged if iou(m, c) > MERGE_IOU), None)
@@ -114,7 +120,6 @@ def merge(cands: List[Dict], words: List[Dict], target_length: Optional[str] = N
         m["window_ids"] = sorted(set(m["window_ids"]) | set(c.get("window_ids") or []))
         if c.get("strength") is not None:
             m["strength"] = max(m.get("strength", c["strength"]), c["strength"])
-    hard_max = TARGET_LENGTHS.get(target_length or config.TARGET_LENGTH, TARGET_LENGTHS["medium"])[2]
     kept = [m for m in merged if MIN_CLIP_SECONDS <= m["end_time"] - m["start_time"] <= hard_max]
     kept.sort(key=lambda x: x["start_time"])
     return [{**m, "id": f"c{i:03d}"} for i, m in enumerate(kept)]

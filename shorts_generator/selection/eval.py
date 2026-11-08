@@ -133,11 +133,13 @@ def run_selector(name: str, ep: Dict, transcript: Dict, run: int = 0,
 
 
 def selector_label(name: str, skip: Iterable[str], samples: Optional[int]) -> str:
-    """Report row name, e.g. deep[-bible,samples=3]; only deep takes options."""
+    """Report row name, e.g. deep[-bible,samples=3]@long; only deep takes options, and the target clip
+    length shows when it is not the default, so rows at different lengths never replace each other."""
+    length = "" if config.TARGET_LENGTH == "medium" else f"@{config.TARGET_LENGTH}"
     if name != "deep":
-        return name
+        return name + length
     parts = [f"-{s}" for s in skip] + ([f"samples={samples}"] if samples else [])
-    return f"deep[{','.join(parts)}]" if parts else "deep"
+    return (f"deep[{','.join(parts)}]" if parts else "deep") + length
 
 
 def evaluate(episodes: List[Dict], selectors: List[str], runs: int = 1,

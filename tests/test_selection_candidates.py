@@ -126,9 +126,16 @@ def test_merge_keeps_iou_half_separate():
     assert len(cd.merge([_c(0, 30), _c(10, 40)], [], "medium")) == 2
 
 
-def test_merge_drops_out_of_range_lengths_and_numbers_by_start():
-    out = cd.merge([_c(500, 530), _c(0, 100), _c(200, 210), _c(100, 130)], [], "medium")
+def test_merge_drops_too_long_spans_and_numbers_by_start():
+    out = cd.merge([_c(500, 530), _c(0, 100), _c(100, 130)], [], "medium")
     assert [(c["id"], c["start_time"]) for c in out] == [("c000", 100), ("c001", 500)]
+
+
+def test_merge_widens_short_spans_to_the_target_minimum():
+    [m] = cd.merge([_c(200, 210)], [], "long")
+    assert (m["start_time"], m["end_time"]) == (182.5, 227.5)
+    [m] = cd.merge([_c(0, 10)], [], "long")
+    assert (m["start_time"], m["end_time"]) == (0.0, 45.0)
 
 
 def test_generate_candidates_adds_loudness_and_bible_spans():
