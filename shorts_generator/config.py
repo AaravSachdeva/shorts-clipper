@@ -49,6 +49,8 @@ CLAUDE_EFFORT = os.getenv("CLIPPER_CLAUDE_EFFORT", "low").strip()  # closest the
 CLAUDE_TIMEOUT_SECONDS = float(os.getenv("CLAUDE_TIMEOUT", "600"))
 # Parallel LLM calls in the deep selector. Keep 1 for Ollama (one model in RAM).
 LLM_WORKERS = int(os.getenv("LLM_WORKERS", "1"))
+# Most live LLM calls one process may make (0 = no cap); cached answers are free.
+LLM_MAX_CALLS = int(os.getenv("LLM_MAX_CALLS", "0"))
 # Per-episode work files of the deep selector and the eval: work/<episode>/calls/, loudness.json, deep.json
 WORK_DIR = os.getenv("WORK_DIR", "work").strip()
 # classic = the one-pass highlights.py selector; deep = shorts_generator/selection (experimental)

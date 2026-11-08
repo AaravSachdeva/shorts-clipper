@@ -175,3 +175,24 @@ def test_live_calls_are_capped_at_llm_workers(tmp_path, monkeypatch):
     ask = cache.make_ask(slow, tmp_path)
     cache.pmap(lambda i: ask(f"p{i}", SCHEMA, "x"), range(8), workers=8)
     assert peak[0] == 2
+
+
+def test_live_call_budget_stops_new_calls_but_not_cached_ones(tmp_path, monkeypatch):
+    monkeypatch.setattr(cache.config, "LLM_MAX_CALLS", 2)
+    monkeypatch.setattr(cache, "_live_calls", 0)
+    llm = _LLM()
+    ask = cache.make_ask(llm, tmp_path)
+    assert ask("p1", SCHEMA, "x") == {"ok": True}
+    assert ask("p2", SCHEMA, "x") == {"ok": True}
+    with pytest.raises(RuntimeError, match="LLM_MAX_CALLS=2 reached"):
+        ask("p3", SCHEMA, "x")
+    assert len(llm.prompts) == 2 and len(list(tmp_path.glob("*.json"))) == 2
+    assert ask("p1", SCHEMA, "x") == {"ok": True} and ask("p2", SCHEMA, "x") == {"ok": True}
+
+
+def test_no_budget_by_default(tmp_path, monkeypatch):
+    monkeypatch.setattr(cache.config, "LLM_MAX_CALLS", 0)
+    monkeypatch.setattr(cache, "_live_calls", 0)
+    ask = cache.make_ask(_LLM(), tmp_path)
+    for i in range(5):
+        assert ask(f"p{i}", SCHEMA, "x") == {"ok": True}

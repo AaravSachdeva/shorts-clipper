@@ -30,6 +30,18 @@ ASK_ATTEMPTS = 3
 # Live model calls across every thread (episodes, stages) at once; created on first use from LLM_WORKERS.
 _SLOTS: Optional[threading.BoundedSemaphore] = None
 _SLOTS_LOCK = threading.Lock()
+# Live calls made by this process; LLM_MAX_CALLS caps them so a bad run cannot drain a usage plan.
+_live_calls = 0
+_BUDGET_LOCK = threading.Lock()
+
+
+def _spend_one() -> None:
+    global _live_calls
+    with _BUDGET_LOCK:
+        if config.LLM_MAX_CALLS and _live_calls >= config.LLM_MAX_CALLS:
+            raise RuntimeError(f"LLM_MAX_CALLS={config.LLM_MAX_CALLS} reached; "
+                               "rerun with a higher cap to resume from the cache")
+        _live_calls += 1
 
 
 def _slots() -> threading.BoundedSemaphore:
@@ -54,6 +66,7 @@ def _cached(llm_fn: LLMFn, calls_dir: Path, prompt: str, schema: Optional[Dict],
         except (OSError, ValueError):
             entry = None
     if entry is None:
+        _spend_one()
         with _slots():
             t0 = time.time()
             response = llm_fn(prompt, schema=schema)  # an exception propagates and writes nothing
