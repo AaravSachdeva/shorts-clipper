@@ -92,3 +92,13 @@ def test_model_id_names_provider_and_model(monkeypatch):
     monkeypatch.setattr(llm.config, "LLM_PROVIDER", "ollama")
     monkeypatch.setattr(llm.config, "OLLAMA_MODEL", "gemma4:12b")
     assert llm.model_id() == "ollama:gemma4:12b"
+
+
+def test_effort_ignores_claude_codes_own_env_var():
+    import os
+    import sys
+    env = {**os.environ, "CLAUDE_EFFORT": "high"}
+    env.pop("CLIPPER_CLAUDE_EFFORT", None)
+    out = subprocess.run([sys.executable, "-c", "from shorts_generator import config; print(config.CLAUDE_EFFORT)"],
+                         env=env, capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "low"

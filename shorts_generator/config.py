@@ -44,7 +44,8 @@ OLLAMA_THINK = os.getenv("OLLAMA_THINK", "false").strip().lower() in ("1", "true
 # Claude (LLM_PROVIDER=claude) — development stand-in for the local model, via headless `claude -p`
 # on the user's Claude login (counts against that plan's usage limits).
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-haiku-5-5").strip()
-CLAUDE_EFFORT = os.getenv("CLAUDE_EFFORT", "low").strip()  # closest the CLI offers to "thinking off"
+# Not CLAUDE_EFFORT: Claude Code sets that in its own shells, which silently forced --effort high.
+CLAUDE_EFFORT = os.getenv("CLIPPER_CLAUDE_EFFORT", "low").strip()  # closest the CLI offers to "thinking off"
 CLAUDE_TIMEOUT_SECONDS = float(os.getenv("CLAUDE_TIMEOUT", "600"))
 # Parallel LLM calls in the deep selector. Keep 1 for Ollama (one model in RAM).
 LLM_WORKERS = int(os.getenv("LLM_WORKERS", "1"))
