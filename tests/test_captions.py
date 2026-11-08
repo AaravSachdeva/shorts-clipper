@@ -63,3 +63,40 @@ def test_whisper_split_tokens_are_joined():
     assert texts == ["the", "u.s", "has", "10,000", "users"]
     joined = [x for g in group_words(words) for x in g if x["text"] == "u.s"][0]
     assert (joined["start"], joined["end"]) == (0.2, 0.5)
+
+
+def _caption_times(doc):
+    out = []
+    for e in _events(doc):
+        if ",Caption," in e:
+            f = e.split(",")
+            out.append((f[1], f[2]))
+    return out
+
+
+def _secs(ts):
+    h, m, s = ts.split(":")
+    return int(h) * 3600 + int(m) * 60 + float(s)
+
+
+def test_caption_events_never_overlap():
+    # Whisper word times can overlap, and a short pause bridges into the next line.
+    words = [_w("pick", 0.0, 0.4), _w("the", 0.35, 0.6), _w("worst.", 0.55, 1.0),
+             _w("know", 1.05, 1.3), _w("how", 1.25, 1.5), _w("to", 1.45, 1.7)]
+    times = [(_secs(a), _secs(b)) for a, b in _caption_times(build_ass(words, 3.0))]
+    assert times == sorted(times)
+    assert all(end <= nxt_start for (_, end), (nxt_start, _) in zip(times, times[1:]))
+
+
+def test_captions_sit_at_one_fixed_position_on_one_line():
+    doc = build_ass(WORDS, 4.0, width=1080, height=1920)
+    caps = [e for e in _events(doc) if ",Caption," in e]
+    assert caps and all("{\\an5\\pos(540,1344)}" in e for e in caps)
+    assert "WrapStyle: 2" in doc
+
+
+def test_hook_wraps_into_balanced_lines():
+    from shorts_generator.local.captions import _wrap
+    assert _wrap("Why experts said AI could never work") == r"Why experts said\NAI could never work"
+    assert _wrap("Short hook") == "Short hook"
+    assert all(len(line) <= 20 for line in _wrap("No equity so why is he still the villain of AI").split(r"\N"))

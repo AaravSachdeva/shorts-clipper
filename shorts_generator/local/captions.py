@@ -1,20 +1,24 @@
 """Burned-in captions and hook overlay as an ASS subtitle file.
 
 Style: "word-highlight" — 2-4 words on screen at a time, the word being spoken
-highlighted in colour with a slight pop, bold white text with a thick black
-outline, sitting at ~65% of frame height (above the platform UI at the bottom).
-The hook overlay is a boxed title in the top third for the first seconds.
+highlighted in colour, bold white text with a thick black outline, on one line
+pinned at 70% of frame height (above the platform UI at the bottom). Lines never
+overlap in time, so the caption never jumps. The hook overlay is a boxed title
+of at most two balanced lines near the top for the first seconds.
 """
 import os
 import re
 from typing import Dict, List, Optional
 
-CAPTION_FONT = os.getenv("CAPTION_FONT", "Inter ExtraBold")
+# Arial resolves to an installed bold sans almost everywhere (Liberation Sans on Linux).
+CAPTION_FONT = os.getenv("CAPTION_FONT", "Arial")
 CAPTION_HIGHLIGHT = os.getenv("CAPTION_HIGHLIGHT", "#FFD400")  # spoken-word colour
 MAX_WORDS_PER_LINE = 3
-MAX_CHARS_PER_LINE = 16
+MAX_CHARS_PER_LINE = 15      # one line at the caption size; captions never wrap
 BREAK_PAUSE = 0.45          # start a new caption after a pause this long
 HOOK_SECONDS = 3.0
+CAPTION_Y = 0.70            # caption centre, as a fraction of frame height
+HOOK_MAX_CHARS = 20          # fits one line at the hook size
 
 
 def _ass_color(hex_rgb: str) -> str:
@@ -70,9 +74,17 @@ def group_words(words: List[Dict]) -> List[List[Dict]]:
     return groups
 
 
-def _wrap(text: str, width: int = 22) -> str:
+def _wrap(text: str, width: int = HOOK_MAX_CHARS) -> str:
+    """One line if it fits, else the most even two-line split, else greedy lines (at most 3)."""
+    words = text.split()
+    if len(text) <= width:
+        return " ".join(words)
+    splits = [(" ".join(words[:i]), " ".join(words[i:])) for i in range(1, len(words))]
+    fitting = [s for s in splits if max(len(s[0]), len(s[1])) <= width]
+    if fitting:
+        return r"\N".join(min(fitting, key=lambda s: (max(len(s[0]), len(s[1])), len(s[0]))))
     out, line = [], ""
-    for word in text.split():
+    for word in words:
         if line and len(line) + 1 + len(word) > width:
             out.append(line)
             line = word
@@ -92,22 +104,23 @@ def build_ass(
     captions: bool = True,
 ) -> str:
     """Return the full .ass document. `words` have clip-relative start/end."""
-    font_size = int(height * 0.06)           # ~115 px at 1920: readable on a phone
-    hook_size = int(height * 0.042)
-    margin_v = int(height * 0.32)            # baseline at ~68% of height
+    font_size = int(height * 0.052)          # ~100 px at 1920: readable on a phone, 15 chars fit one line
+    hook_size = int(height * 0.044)
     hi = _ass_color(CAPTION_HIGHLIGHT)
+    # A fixed point instead of a margin: lines never shift, and libass never stacks two of them.
+    pos = f"{{\\an5\\pos({width // 2},{int(height * CAPTION_Y)})}}"
 
     header = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: {width}
 PlayResY: {height}
-WrapStyle: 0
+WrapStyle: 2
 ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Caption,{CAPTION_FONT},{font_size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,{max(4, font_size // 12)},2,2,60,60,{margin_v},1
-Style: Hook,{CAPTION_FONT},{hook_size},&H00101010,&H00101010,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,3,{max(10, hook_size // 4)},0,8,80,80,{int(height * 0.13)},1
+Style: Caption,{CAPTION_FONT},{font_size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,{max(4, font_size // 12)},2,5,60,60,0,1
+Style: Hook,{CAPTION_FONT},{hook_size},&H00101010,&H00101010,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,4,{max(10, hook_size // 4)},0,8,80,80,{int(height * 0.09)},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -120,6 +133,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         events.append(f"Dialogue: 1,{_ts(0)},{_ts(end)},Hook,,0,0,0,,{{\\fad(120,250)}}{text}")
 
     if captions:
+        caps = []
         groups = group_words(words)
         for gi, g in enumerate(groups):
             g_end = g[-1]["end"]
@@ -137,6 +151,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                         parts.append(f"{{\\c{hi}}}{x['text']}{{\\c&H00FFFFFF&}}")
                     else:
                         parts.append(x["text"])
-                events.append(f"Dialogue: 0,{_ts(start)},{_ts(end)},Caption,,0,0,0,,{' '.join(parts)}")
+                caps.append([start, end, " ".join(parts)])
+        caps.sort(key=lambda c: c[0])
+        for i, (start, end, text) in enumerate(caps):
+            if i + 1 < len(caps):
+                end = min(end, caps[i + 1][0])  # Whisper word times overlap; two lines on screen would stack
+            if end > start:
+                events.append(f"Dialogue: 0,{_ts(start)},{_ts(end)},Caption,,0,0,0,,{pos}{text}")
 
     return header + "\n".join(events) + "\n"
