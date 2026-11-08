@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from . import config, muapi
-from .boundaries import all_words, snap_highlights
+from .boundaries import all_words, snap_highlights, widen_to
 
 
 LLMFn = Callable[..., str]
@@ -595,9 +595,12 @@ def get_highlights(
         text = build_transcript_text(transcript)
         all_highlights = call_highlight_api(text, content_info, duration, **kwargs).get("highlights", [])
 
-    all_highlights = snap_highlights(transcript, all_highlights)
+    min_len, _, hard_max = TARGET_LENGTHS.get((target_length or config.TARGET_LENGTH), TARGET_LENGTHS["medium"])
     # Models often ignore the length rule; enforce it before ranking.
-    hard_max = TARGET_LENGTHS.get((target_length or config.TARGET_LENGTH), TARGET_LENGTHS["medium"])[2]
+    all_highlights = [{**h, **dict(zip(("start_time", "end_time"),
+                                       widen_to(float(h["start_time"]), float(h["end_time"]), min_len)))}
+                      for h in all_highlights]
+    all_highlights = snap_highlights(transcript, all_highlights)
     in_range = [h for h in all_highlights if MIN_CLIP_SECONDS <= h["end_time"] - h["start_time"] <= hard_max]
     if len(in_range) < len(all_highlights):
         print(f"[highlights] dropped {len(all_highlights) - len(in_range)} clips outside {MIN_CLIP_SECONDS}-{hard_max}s", flush=True)

@@ -3,7 +3,7 @@ import math
 from typing import Dict, List, Optional, Tuple
 
 from .. import config
-from ..boundaries import all_words, snap_clip
+from ..boundaries import all_words, snap_clip, widen_to
 from ..highlights import (MIN_CLIP_SECONDS, PLATFORM_SIGNALS, TARGET_LENGTHS, VIRALITY_CRITERIA,
                           build_transcript_text, chunk_transcript)
 from .cache import Ask, judge_prefix, load_prompt, pmap
@@ -103,10 +103,7 @@ def merge(cands: List[Dict], words: List[Dict], target_length: Optional[str] = N
     min_len, _, hard_max = TARGET_LENGTHS.get(target_length or config.TARGET_LENGTH, TARGET_LENGTHS["medium"])
     snapped = []
     for c in cands:
-        start, end = float(c["start_time"]), float(c["end_time"])
-        if end - start < min_len:  # models answer shorter than asked (Haiku: median 23 s when asked for 20-60)
-            mid = (start + end) / 2
-            start, end = max(0.0, mid - min_len / 2), max(0.0, mid - min_len / 2) + min_len
+        start, end = widen_to(float(c["start_time"]), float(c["end_time"]), min_len)
         s = snap_clip(words, start, end) if words else None
         snapped.append({**c, **s} if s else {**c, "start_time": start, "end_time": end})
     merged: List[Dict] = []

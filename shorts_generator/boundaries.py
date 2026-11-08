@@ -8,7 +8,7 @@ mid-sentence or a breath early/late. With word-level timings we can:
     syllable isn't clipped, but before the next word begins.
 """
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 SNAP_WINDOW_SECONDS = 3.0
 PAUSE_SECONDS = 0.6           # a gap this long also counts as a sentence break
@@ -107,6 +107,17 @@ def snap_clip(words: List[Dict], start: float, end: float, window: float = SNAP_
     if new_end - new_start < MIN_CLIP_SECONDS:
         return None
     return {"start_time": round(new_start, 3), "end_time": round(new_end, 3)}
+
+
+def widen_to(start: float, end: float, min_len: float) -> Tuple[float, float]:
+    """A span shorter than min_len widened around its middle to min_len (never before 0); others unchanged.
+
+    Models answer shorter than asked (Haiku: median 23 s when asked for 20-60 s), so callers widen before snapping.
+    """
+    if end - start >= min_len:
+        return start, end
+    lo = max(0.0, (start + end) / 2 - min_len / 2)
+    return lo, lo + min_len
 
 
 def snap_highlights(transcript: Dict, highlights: List[Dict]) -> List[Dict]:

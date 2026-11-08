@@ -253,3 +253,12 @@ def test_baselines_use_the_target_length(tmp_path, monkeypatch):
     monkeypatch.setattr(ev, "loudness_per_second", lambda src, cache: db)
     [span] = ev.run_selector("signal", _ep(tmp_path), transcript)["picks"]
     assert span["end_time"] - span["start_time"] >= 40  # +-22.5 s, then snapped to sentence edges
+
+
+def test_classic_picks_are_widened_to_the_target_minimum(tmp_path, monkeypatch):
+    monkeypatch.setattr(ev.config, "WORK_DIR", str(tmp_path / "work"))
+    monkeypatch.setattr(ev.config, "TARGET_LENGTH", "long")
+    fake, _ = _classic_fake()  # answers one 10-40 s clip
+    monkeypatch.setattr(ev, "call_local_llm", fake)
+    [p] = ev.run_selector("classic", _ep(tmp_path), _transcript())["picks"]
+    assert (p["start_time"], p["end_time"]) == (2.5, 47.5)

@@ -146,7 +146,7 @@ def test_short_video_is_windowed_too(monkeypatch):
     assert len(offsets) == 3  # windows at 0, 240, 480 s: no single pass over the whole video
 
 
-def test_clips_outside_length_limits_are_dropped(monkeypatch):
+def test_short_clips_are_widened_and_too_long_clips_dropped(monkeypatch):
     monkeypatch.setattr(hl.config, "HIGHLIGHT_CHUNK_SECONDS", 1200)
     spans = [(10, 15), (100, 130), (300, 452)]  # 5 s, 30 s, 152 s; medium allows 12-90 s
 
@@ -158,4 +158,4 @@ def test_clips_outside_length_limits_are_dropped(monkeypatch):
         ]})
 
     out = hl.get_highlights(_transcript(duration=600), num_clips=3, llm_fn=fake_llm, rerank=False, target_length="medium")
-    assert [h["start_time"] for h in out["highlights"]] == [100.0]
+    assert sorted((h["start_time"], h["end_time"]) for h in out["highlights"]) == [(2.5, 22.5), (100.0, 130.0)]
